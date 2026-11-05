@@ -94,16 +94,20 @@ audio.preservesPitch = false;
 let gen = 0;
 const wait = (ms: number) => new Promise((r) => setTimeout(r, ms));
 
+/**
+ * Плавные переходы на таймере, а не на requestAnimationFrame: когда окно
+ * спрятано в трей, rAF замирает, и пауза/остановка зависли бы.
+ */
 function tween(ms: number, step: (k: number) => void): Promise<void> {
   return new Promise((resolve) => {
     const t0 = performance.now();
-    const tick = (now: number) => {
-      const k = Math.min(1, (now - t0) / ms);
+    const tick = () => {
+      const k = Math.min(1, (performance.now() - t0) / ms);
       step(k);
-      if (k < 1) requestAnimationFrame(tick);
+      if (k < 1) setTimeout(tick, 16);
       else resolve();
     };
-    requestAnimationFrame(tick);
+    tick();
   });
 }
 
@@ -416,6 +420,13 @@ export async function nextTrack() {
   await goToSide((s.sideIdx + 1) % Math.max(1, s.sides.length), 0, true);
 }
 
+/** Пауза/играть для трея, мини-плеера и медиаклавиш. */
+export function togglePlay() {
+  const s = st();
+  if (s.needle === "down" || s.needle === "lifted") void toggleLift();
+  else if (!s.motor) void startMotor();
+}
+
 /** ♥ на деке. */
 export function likeCurrent() {
   const t = currentTrack(st());
@@ -553,14 +564,7 @@ function setupMediaSession() {
   });
 
   const handlers: [MediaSessionAction, () => void][] = [
-    [
-      "play",
-      () => {
-        const s = st();
-        if (s.needle === "lifted") void toggleLift();
-        else if (!s.motor) void startMotor();
-      },
-    ],
+    ["play", () => togglePlay()],
     ["pause", () => st().needle === "down" && void toggleLift()],
     ["stop", () => void stopMotor()],
     ["nexttrack", () => void nextTrack()],

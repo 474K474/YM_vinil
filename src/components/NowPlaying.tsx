@@ -1,10 +1,30 @@
 import { currentSide, currentTrack, flip, flipLabel, usePlayer } from "../player/engine";
 import { useStore } from "../store";
+import type { Track } from "../api/ym";
 
 const mmss = (ms: number) => {
   const s = Math.max(0, Math.floor(ms / 1000));
   return `${Math.floor(s / 60)}:${String(s % 60).padStart(2, "0")}`;
 };
+
+/** Имена исполнителей — клик открывает витрину исполнителя на полке. */
+function ArtistLinks({ track }: { track: Track }) {
+  const openArtist = useStore((s) => s.openArtist);
+  const refs = track.artistRefs ?? [];
+  if (refs.length === 0) return <>{track.artists}</>;
+  return (
+    <>
+      {refs.map((a, i) => (
+        <span key={a.id}>
+          {i > 0 && ", "}
+          <button className="artist-link" onClick={() => void openArtist(a.id, a.name)} title="Пластинки исполнителя">
+            {a.name}
+          </button>
+        </span>
+      ))}
+    </>
+  );
+}
 
 export function NowPlaying() {
   const record = useStore((s) => s.onPlatter);
@@ -42,7 +62,7 @@ export function NowPlaying() {
               {p.trackIdx + 1}. {track.title}
             </div>
             <div className="muted small">
-              {track.artists} · {mmss(p.positionMs)} / {mmss(track.durationMs)} · дорожка{" "}
+              <ArtistLinks track={track} /> · {mmss(p.positionMs)} / {mmss(track.durationMs)} · дорожка{" "}
               {p.trackIdx + 1} из {side.tracks.length}
             </div>
           </div>

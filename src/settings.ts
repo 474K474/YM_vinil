@@ -2,6 +2,12 @@
 import { create } from "zustand";
 
 export type Settings = {
+  /** Закрытие окна прячет его в трей. */
+  closeToTray: boolean;
+  /** Стиль винила (docs/PROJECT.md, 4.10). */
+  vinylStyle: "black" | "color" | "clear" | "picture";
+  /** Сортировка плейлистов и альбомов. */
+  shelfSort: "default" | "title" | "artist" | "year";
   /** Громкость с ручки на деке 0…1. */
   volume: number;
   /** Главный переключатель «звука винила»: тон, насыщение, плавание, треск. */
@@ -22,6 +28,9 @@ export type Settings = {
 
 const KEY = "ym-vinil:settings";
 const defaults: Settings = {
+  closeToTray: true,
+  vinylStyle: "black",
+  shelfSort: "default",
   volume: 0.8,
   vinylSound: true,
   vinylAmount: 0.6,

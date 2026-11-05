@@ -1,0 +1,62 @@
+:root { color-scheme: dark; --amber: #f0a64a; }
+* { box-sizing: border-box; }
+html, body, #root { height: 100%; margin: 0; overflow: hidden; }
+body {
+  font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+  color: #f1e6d6; user-select: none; -webkit-font-smoothing: antialiased;
+  background: #1a120c;
+}
+button { font: inherit; color: inherit; cursor: pointer; }
+
+.mini {
+  height: 100%; display: flex; align-items: center; gap: 14px; padding: 10px 12px 10px 14px;
+  background:
+    radial-gradient(ellipse 60% 120% at 15% 0%, rgba(240,166,74,.18), transparent 70%),
+    linear-gradient(160deg, #5a3320, #3a1f12 55%, #26140b);
+  box-shadow: inset 0 0 0 1px #6b4127, inset 0 1px 0 rgba(255,220,170,.12);
+}
+
+.mini-disc {
+  flex: none; width: 88px; height: 88px; border-radius: 50%; position: relative;
+  background:
+    repeating-radial-gradient(circle, #121212 0 1.5px, #232323 1.5px 2.5px, #121212 2.5px 4px);
+  box-shadow: 0 6px 14px rgba(0,0,0,.55), inset 0 0 0 1px #000;
+}
+.mini-disc.spin { animation: spin 1.8s linear infinite; }
+.mini-label {
+  position: absolute; inset: 30%; border-radius: 50%;
+  background: var(--label) center / cover no-repeat;
+  box-shadow: 0 0 0 2px #0b0b0b;
+}
+.mini-label::after {
+  content: ""; position: absolute; inset: 44%; border-radius: 50%; background: #d6d4cf;
+}
+.mini-disc::after {
+  content: ""; position: absolute; inset: 0; border-radius: 50%; pointer-events: none;
+  background: conic-gradient(from 20deg, transparent 0 10%, rgba(255,255,255,.08) 14%, transparent 20% 55%, rgba(255,255,255,.05) 64%, transparent 70%);
+}
+@keyframes spin { to { transform: rotate(360deg); } }
+
+.mini-text { flex: 1; min-width: 0; display: grid; gap: 2px; }
+.mini-title { font: 600 15px "Iowan Old Style", "Palatino Linotype", Georgia, serif; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.mini-artist { font-size: 12px; color: #c9b39a; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.mini-keys { display: flex; gap: 6px; margin-top: 6px; }
+.mini-keys button {
+  min-width: 34px; height: 26px; padding: 0 8px; font-size: 11px; letter-spacing: -.1em;
+  border: 1px solid #6b4a2a; border-radius: 6px; color: #2a1d10;
+  background: linear-gradient(180deg, #f4f4f1, #b9b9b4);
+  box-shadow: 0 2px 4px rgba(0,0,0,.4), inset 0 1px 0 #fff;
+}
+.mini-keys button:hover:not(:disabled) { box-shadow: 0 0 10px rgba(240,166,74,.5), inset 0 1px 0 #fff; }
+.mini-keys button:active:not(:disabled) { transform: translateY(1px); }
+.mini-keys button:disabled { opacity: .45; cursor: default; }
+.mini-keys .play { min-width: 44px; letter-spacing: 0; }
+.mini-keys .heart { letter-spacing: 0; font-size: 13px; color: #555; }
+.mini-keys .heart.on { color: #e0312b; }
+
+.mini-win { align-self: flex-start; display: flex; gap: 2px; }
+.mini-win button {
+  width: 22px; height: 22px; border: 0; border-radius: 5px; background: transparent;
+  color: #c9b39a; font-size: 14px; line-height: 1;
+}
+.mini-win button:hover { background: rgba(255,220,170,.12); color: #fff; }

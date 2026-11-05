@@ -12,6 +12,8 @@ import { toggleFullscreen, useFullscreen } from "./fullscreen";
 import { updateSettings, useSettings } from "./settings";
 import { UpdateBanner } from "./components/UpdateBanner";
 import { startUpdateChecks } from "./updater";
+import { startBridge } from "./bridge";
+import { invoke } from "@tauri-apps/api/core";
 
 export default function App() {
   const { status, error, account, init, loadShelf, logout } = useStore();
@@ -20,6 +22,7 @@ export default function App() {
 
   useEffect(() => {
     startUpdateChecks();
+    startBridge();
   }, []);
 
   useEffect(() => {
@@ -56,6 +59,9 @@ export default function App() {
             {!account.hasPlus && <em className="warn"> · без Плюса треки не заиграют</em>}
           </span>
         )}
+        <button className="lamp-btn" onClick={() => void invoke("toggle_mini").catch(() => {})}>
+          Мини-плеер
+        </button>
         <button className="lamp-btn" onClick={() => void toggleFullscreen()} title="F11">
           На весь экран
         </button>

@@ -99,3 +99,26 @@ export function coverColor(url: string): Promise<RGB | null> {
   }
   return p;
 }
+
+export function hexToRgb(hex: string): RGB {
+  const h = hex.replace("#", "");
+  return { r: parseInt(h.slice(0, 2), 16), g: parseInt(h.slice(2, 4), 16), b: parseInt(h.slice(4, 6), 16) };
+}
+
+export type VinylStyle = "black" | "color" | "clear" | "picture";
+
+/** Цвета пластинки для стиля винила (docs/PROJECT.md, 4.10). */
+export function vinylLook(style: VinylStyle, label: string, tint: string) {
+  const { h, s } = rgbToHsl(hexToRgb(label));
+  const sat = Math.max(0.5, Math.min(0.85, s + 0.15));
+  switch (style) {
+    case "color":
+      return { base: hslToHex(h, sat, 0.36), baseOpacity: 1, runout: hslToHex(h, sat, 0.3), clearGrooves: true };
+    case "clear":
+      return { base: hslToHex(h, sat, 0.5), baseOpacity: 0.42, runout: hslToHex(h, sat, 0.45), clearGrooves: true };
+    case "picture":
+      return { base: hslToHex(h, sat, 0.3), baseOpacity: 1, runout: hslToHex(h, sat, 0.25), clearGrooves: true };
+    default:
+      return { base: tint, baseOpacity: 1, runout: "#111111", clearGrooves: false };
+  }
+}

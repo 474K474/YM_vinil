@@ -3,7 +3,7 @@ import { invoke } from "@tauri-apps/api/core";
 /** Пластинка на полке: плейлист или альбом из Яндекс Музыки. */
 export type RecordItem = {
   key: string;
-  kind: "playlist" | "album" | "likes" | "wave";
+  kind: "playlist" | "album" | "likes" | "wave" | "chart" | "artist";
   /** id альбома или kind плейлиста */
   sourceId: string;
   ownerUid?: number;
@@ -11,6 +11,9 @@ export type RecordItem = {
   subtitle: string;
   cover: string | null;
   trackCount: number;
+  /** Для сортировки: исполнитель и год (у альбомов). */
+  artist?: string;
+  year?: number;
 };
 
 export type Account = {
@@ -82,7 +85,7 @@ type RawPlaylist = {
   ogImage?: string;
 };
 
-type RawAlbum = {
+export type RawAlbum = {
   id: number;
   title: string;
   year?: number;
@@ -90,6 +93,22 @@ type RawAlbum = {
   coverUri?: string;
   artists?: { name: string }[];
 };
+
+/** Альбом из любого ответа API → пластинка. */
+export function albumRecord(a: RawAlbum): RecordItem {
+  const artist = a.artists?.map((x) => x.name).join(", ") ?? "";
+  return {
+    key: `al-${a.id}`,
+    kind: "album",
+    sourceId: String(a.id),
+    title: a.title,
+    subtitle: [artist, a.year].filter(Boolean).join(" · "),
+    cover: coverUrl(a.coverUri),
+    trackCount: a.trackCount ?? 0,
+    artist,
+    year: a.year,
+  };
+}
 
 export async function fetchShelf(account: Account): Promise<RecordItem[]> {
   const [playlists, likedAlbums] = await Promise.all([
@@ -122,15 +141,7 @@ export async function fetchShelf(account: Account): Promise<RecordItem[]> {
   const fromAlbums = likedAlbums
     .map((l) => l.album)
     .filter((a): a is RawAlbum => Boolean(a))
-    .map<RecordItem>((a) => ({
-      key: `al-${a.id}`,
-      kind: "album",
-      sourceId: String(a.id),
-      title: a.title,
-      subtitle: [a.artists?.map((x) => x.name).join(", "), a.year].filter(Boolean).join(" · "),
-      cover: coverUrl(a.coverUri),
-      trackCount: a.trackCount ?? 0,
-    }));
+    .map(albumRecord);
 
   const wave: RecordItem = {
     key: "wave",
@@ -143,13 +154,25 @@ export async function fetchShelf(account: Account): Promise<RecordItem[]> {
     trackCount: 0,
   };
 
-  return [wave, likes, ...fromPlaylists, ...fromAlbums];
+  const chart: RecordItem = {
+    key: "chart",
+    kind: "chart",
+    sourceId: "russia",
+    title: "Чарт",
+    subtitle: "Топ-30 Яндекс Музыки",
+    cover: null,
+    trackCount: 30,
+  };
+
+  return [wave, chart, likes, ...fromPlaylists, ...fromAlbums];
 }
 
 // ── Треки ────────────────────────────────────────────────
 
 export type Track = {
   id: string;
+  /** Исполнители с id — для витрины исполнителя. */
+  artistRefs?: { id: string; name: string }[];
   /** id:albumId — так трек называют ротор и очередь. */
   queueId?: string;
   title: string;
@@ -163,7 +186,7 @@ export type RawTrack = {
   version?: string;
   durationMs?: number;
   available?: boolean;
-  artists?: { name: string }[];
+  artists?: { id?: number | string; name: string }[];
   albums?: { id: number }[];
 };
 
@@ -172,6 +195,7 @@ export function toTrack(t: RawTrack): Track | null {
   const albumId = t.albums?.[0]?.id;
   return {
     id: String(t.id),
+    artistRefs: (t.artists ?? []).filter((a) => a.id != null).map((a) => ({ id: String(a.id), name: a.name })),
     queueId: albumId ? `${t.id}:${albumId}` : String(t.id),
     title: t.version ? `${t.title} (${t.version})` : t.title,
     artists: t.artists?.map((a) => a.name).join(", ") ?? "",
@@ -201,6 +225,19 @@ export async function fetchRecordTracks(record: RecordItem): Promise<Track[][]> 
   if (record.kind === "album") {
     const r = await get<{ volumes?: RawTrack[][] }>(`/albums/${record.sourceId}/with-tracks`);
     return (r.volumes ?? []).map(clean).filter((v) => v.length > 0);
+  }
+
+  if (record.kind === "chart") {
+    const r = await get<{ chart?: { tracks?: { track?: RawTrack }[] } }>(`/landing3/chart/${record.sourceId}`);
+    return [clean((r.chart?.tracks ?? []).slice(0, 30).map((i) => i.track))];
+  }
+
+  if (record.kind === "artist") {
+    const r = await get<{ tracks?: RawTrack[] }>(`/artists/${record.sourceId}/tracks`, {
+      page: "0",
+      "page-size": "30",
+    });
+    return [clean(r.tracks ?? [])];
   }
 
   if (record.kind === "playlist") {

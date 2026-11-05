@@ -34,6 +34,8 @@ import { trackOffsets } from "../player/press";
 import { useStore } from "../store";
 import { toggleFullscreen } from "../fullscreen";
 import { DeckExtras } from "./DeckExtras";
+import { useSettings } from "../settings";
+import { vinylLook } from "../player/color";
 
 const { x: CX, y: CY } = CENTER;
 /** 33⅓ об/мин в градусах в секунду. */
@@ -104,6 +106,11 @@ export function Turntable() {
   const side = p.sides[shownSideIdx] ?? currentSide(p);
   const spinRef = useSpin(p.motor, p.speed);
   const svgRef = useRef<SVGSVGElement>(null);
+  const vinylStyle = useSettings((s) => s.vinylStyle);
+  // Пикчер-диск без обложки показываем цветным (docs/PROJECT.md, 4.10).
+  const picture =
+    vinylStyle === "picture" && record?.cover ? record.cover.replace("400x400", "1000x1000") : null;
+  const look = vinylLook(vinylStyle === "picture" && !picture ? "color" : vinylStyle, p.labelColor, p.vinylTint);
 
   const r = armRadius(p);
   const armDeg = r === null ? ARM_REST_DEG : armAngleForRadius(r);
@@ -184,6 +191,22 @@ export function Turntable() {
           <stop offset=".5" stopColor="#232323" />
           <stop offset="1" stopColor="#121212" />
         </radialGradient>
+        {/* Полупрозрачные бороздки — для цветного, прозрачного и пикчер-диска */}
+        <radialGradient
+          id="groovesClear"
+          gradientUnits="userSpaceOnUse"
+          cx={CX}
+          cy={CY}
+          r="2.2"
+          spreadMethod="repeat"
+        >
+          <stop offset="0" stopColor="#000" stopOpacity=".16" />
+          <stop offset=".5" stopColor="#fff" stopOpacity=".05" />
+          <stop offset="1" stopColor="#000" stopOpacity=".16" />
+        </radialGradient>
+        <clipPath id="discClip">
+          <circle cx={CX} cy={CY} r={RECORD_R} />
+        </clipPath>
         <filter id="sheenBlur" x="-10%" y="-10%" width="120%" height="120%">
           <feGaussianBlur stdDeviation="12" />
         </filter>
@@ -280,19 +303,41 @@ export function Turntable() {
               onClick={onRecordClick}
               clipPath="url(#recordClip)"
             >
-              <circle cx={CX} cy={CY} r={RECORD_R} fill={p.vinylTint} />
-              <circle cx={CX} cy={CY} r={GROOVE_OUTER_R} fill="url(#grooves)" />
-              <circle cx={CX} cy={CY} r={GROOVE_OUTER_R} fill={p.labelColor} opacity=".07" />
+              <circle cx={CX} cy={CY} r={RECORD_R} fill={look.base} fillOpacity={look.baseOpacity} />
+              {picture && (
+                <LabelSpin motor={p.motor} speed={p.speed}>
+                  <image
+                    href={picture}
+                    x={CX - RECORD_R}
+                    y={CY - RECORD_R}
+                    width={RECORD_R * 2}
+                    height={RECORD_R * 2}
+                    preserveAspectRatio="xMidYMid slice"
+                    clipPath="url(#discClip)"
+                  />
+                </LabelSpin>
+              )}
+              <circle
+                cx={CX}
+                cy={CY}
+                r={GROOVE_OUTER_R}
+                fill={look.clearGrooves ? "url(#groovesClear)" : "url(#grooves)"}
+                opacity={picture ? 0.35 : 1}
+              />
+              {!look.clearGrooves && <circle cx={CX} cy={CY} r={GROOVE_OUTER_R} fill={p.labelColor} opacity=".07" />}
               {gaps.map((gr) => (
                 <g key={gr}>
                   <circle cx={CX} cy={CY} r={gr} fill="none" stroke="#080808" strokeWidth="2.2" />
                   <circle cx={CX} cy={CY} r={gr - 1.4} fill="none" stroke="#ffffff12" strokeWidth=".7" />
                 </g>
               ))}
-              <circle cx={CX} cy={CY} r={GROOVE_INNER_R} fill="#111" />
+              {!picture && (
+                <circle cx={CX} cy={CY} r={GROOVE_INNER_R} fill={look.runout} fillOpacity={look.baseOpacity} />
+              )}
               <circle cx={CX} cy={CY} r={RECORD_R - 0.5} fill="none" stroke="#2a2a2a" />
 
               {/* Вращается только лейбл: бороздки симметричны, блики стоят */}
+              {!picture && (
               <LabelSpin motor={p.motor} speed={p.speed}>
                   <circle cx={CX} cy={CY} r={LABEL_R} fill={p.labelColor} style={{ transition: "fill .8s" }} />
                   <circle cx={CX} cy={CY} r={LABEL_R - 4} fill="none" stroke="#d6b36a55" strokeWidth=".8" />
@@ -304,12 +349,14 @@ export function Turntable() {
                   <text x={CX + 46} y={CY + 4} className="label-side small">33⅓</text>
                   <text x={CX} y={CY + 64} className="label-fine">STEREO · LONG PLAY</text>
               </LabelSpin>
+              )}
 
               <g filter="url(#sheenBlur)" pointerEvents="none">
                 <path d={wedge(204, 232, RECORD_R)} fill="#fff" opacity=".09" />
                 <path d={wedge(24, 52, RECORD_R)} fill="#fff" opacity=".06" />
               </g>
-              <circle cx={CX} cy={CY} r={LABEL_R} fill="none" stroke="#00000066" strokeWidth="2" />
+              {!picture && <circle cx={CX} cy={CY} r={LABEL_R} fill="none" stroke="#00000066" strokeWidth="2" />}
+              {picture && <circle cx={CX} cy={CY} r={20} fill="none" stroke="#ffffff40" strokeWidth="1" />}
             </g>
             </g>
           </motion.g>

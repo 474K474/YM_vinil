@@ -1,4 +1,5 @@
 mod auth;
+mod tray;
 mod ym;
 
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
@@ -9,6 +10,8 @@ pub fn run() {
             // Автообновление из GitHub Releases (docs/PROJECT.md, 4.7).
             #[cfg(desktop)]
             app.handle().plugin(tauri_plugin_updater::Builder::new().build())?;
+            // Трей, закрытие в трей и мини-плеер (docs/PROJECT.md, 4.9).
+            tray::setup(app)?;
             Ok(())
         })
         .invoke_handler(tauri::generate_handler![
@@ -21,6 +24,10 @@ pub fn run() {
             ym::track_bytes,
             ym::cover_bytes,
             ym::track_url,
+            tray::toggle_mini,
+            tray::show_main_window,
+            tray::set_close_to_tray,
+            tray::set_tray_tooltip,
         ])
         .run(tauri::generate_context!())
         .expect("не удалось запустить приложение");

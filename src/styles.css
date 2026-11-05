@@ -378,3 +378,44 @@ h1, h2 { font-family: var(--serif); font-weight: 600; margin: 0; }
 .round-key.off { opacity: .45; cursor: default; }
 .volume-knob { cursor: ns-resize; touch-action: none; }
 .volume-arc { stroke: var(--amber); filter: drop-shadow(0 0 3px rgba(240,166,74,.8)); }
+
+/* ── Поиск и сортировка полки ──────────────── */
+.shelf-tools { display: flex; gap: 10px; position: sticky; top: -22px; z-index: 4; padding: 12px 0 10px; margin-top: -12px;
+  background: linear-gradient(180deg, #181210 70%, rgba(24,18,16,0)); }
+.shelf-search, .shelf-sort {
+  border: 1px solid #574029; border-radius: 8px; color: #f1dcb8; font: 14px var(--sans);
+  background: linear-gradient(180deg, #241912, #1d1510); box-shadow: inset 0 2px 4px rgba(0,0,0,.4);
+  padding: 8px 12px; outline: none; transition: border-color .2s, box-shadow .2s;
+}
+.shelf-search { flex: 1; min-width: 0; user-select: text; }
+.shelf-search::placeholder { color: #8a7660; }
+.shelf-search:focus, .shelf-sort:focus { border-color: var(--amber); box-shadow: inset 0 2px 4px rgba(0,0,0,.4), 0 0 12px rgba(240,166,74,.3); }
+.shelf-sort { cursor: pointer; }
+.shelf-head-actions { display: flex; align-items: center; gap: 8px; }
+.artist-link {
+  background: none; border: 0; padding: 0; color: inherit; font: inherit;
+  text-decoration: underline; text-decoration-color: rgba(240,166,74,.45); text-underline-offset: 2px;
+}
+.artist-link:hover { color: #ffe6bd; text-decoration-color: var(--amber); }
+.sleeve-chart {
+  background:
+    repeating-linear-gradient(135deg, rgba(0,0,0,.08) 0 6px, transparent 6px 12px),
+    linear-gradient(160deg, #e7c88a, #b98c45 55%, #6b4a1e);
+}
+.sleeve-chart .sleeve-fallback { color: #2b1d0e; text-shadow: 0 1px 0 rgba(255,255,255,.4); font-size: 24px; }
+.sleeve-artist { filter: sepia(.25) saturate(1.05); }
+.sleeve-artist::before {
+  content: "ЛУЧШЕЕ"; position: absolute; left: 8px; bottom: 8px; z-index: 1;
+  font: 700 9px var(--sans); letter-spacing: .25em; padding: 3px 6px; border-radius: 3px;
+  background: rgba(20,14,10,.75); color: #f0d6a8;
+}
+
+/* ── Переключатель стиля винила ────────────── */
+.seg { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; }
+.seg button {
+  border: 1px solid #b89a68; border-radius: 6px; padding: 6px 8px; font-size: 12px; font-weight: 600;
+  background: rgba(255,250,240,.5); color: #4a3622;
+}
+.seg button:hover { background: rgba(255,250,240,.85); }
+.seg button.on { background: #2b1d0e; color: #f6dcae; border-color: #2b1d0e; box-shadow: 0 0 10px rgba(240,166,74,.45); }
+.settings-panel { max-height: calc(100vh - 80px); overflow-y: auto; }
