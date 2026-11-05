@@ -1,10 +1,10 @@
 name: release
 
-# Пуш тега вида v0.1.0 собирает установщики для Windows, macOS и Linux
-# и выкладывает их черновиком в GitHub Releases.
+# Пуш в ветку release собирает установщики для Windows, macOS и Linux
+# и выкладывает их в GitHub Releases как пре-релиз vВЕРСИЯ (версия из tauri.conf.json).
 on:
   push:
-    tags: ["v*"]
+    branches: [release]
   workflow_dispatch:
 
 jobs:
@@ -52,9 +52,9 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
-          tagName: ${{ github.ref_name }}
-          releaseName: "YM Vinil ${{ github.ref_name }}"
-          releaseBody: "Скачайте установщик для своей системы ниже."
-          releaseDraft: true
-          prerelease: false
+          tagName: v__VERSION__
+          releaseName: "YM Vinil v__VERSION__"
+          releaseBody: "Тестовая сборка. Windows: скачайте файл .msi или -setup.exe ниже."
+          releaseDraft: false
+          prerelease: true
           args: ${{ matrix.args }}
