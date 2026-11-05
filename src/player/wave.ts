@@ -2,6 +2,7 @@
  * «Моя волна» (docs/PROJECT.md, 4.5): сессия ротора и добор треков на диск.
  */
 import { type RawTrack, type Track, postJson, toTrack } from "../api/ym";
+import { markLiked } from "./likes";
 import { DISC_CAPACITY_MS } from "./press";
 
 const STATION = "user:onyourwave";
@@ -10,7 +11,7 @@ const FROM = "desktop-ym-vinil-wave";
 type Session = {
   radioSessionId: string;
   batchId: string;
-  sequence?: { track?: RawTrack }[];
+  sequence?: { track?: RawTrack; liked?: boolean }[];
 };
 
 let sessionId: string | null = null;
@@ -31,6 +32,7 @@ function accept(s: Session): Track[] {
   sessionId = s.radioSessionId ?? sessionId;
   batchId = s.batchId ?? batchId;
   const out: Track[] = [];
+  markLiked((s.sequence ?? []).filter((i) => i.liked && i.track).map((i) => String(i.track!.id)));
   for (const item of s.sequence ?? []) {
     const t = item.track ? toTrack(item.track) : null;
     if (!t || queue.includes(t.queueId ?? t.id)) continue;

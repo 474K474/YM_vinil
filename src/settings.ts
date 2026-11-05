@@ -2,6 +2,8 @@
 import { create } from "zustand";
 
 export type Settings = {
+  /** Громкость с ручки на деке 0…1. */
+  volume: number;
   /** Главный переключатель «звука винила»: тон, насыщение, плавание, треск. */
   vinylSound: boolean;
   /** Сила эффекта 0…1. */
@@ -20,6 +22,7 @@ export type Settings = {
 
 const KEY = "ym-vinil:settings";
 const defaults: Settings = {
+  volume: 0.8,
   vinylSound: true,
   vinylAmount: 0.6,
   crackleVolume: 0.6,

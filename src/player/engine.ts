@@ -10,6 +10,7 @@ import { DEFAULT_LABEL, coverColor, labelColor, vinylTint } from "./color";
 import { crackle } from "./crackle";
 import { attachMedia, audioCtx, wowFactor } from "./fx";
 import { pressWaveDisc, resetWave, waveFeedback } from "./wave";
+import { dislike, toggleLike } from "./likes";
 import { RUNOUT_R, grooveRadius } from "./geometry";
 import { type Side, allSides, press, trackOffsets } from "./press";
 
@@ -119,6 +120,18 @@ setInterval(() => {
   if (!audio.paused) audio.playbackRate = Math.max(0.0625, baseRate * wowFactor(performance.now() / 1000));
 }, 40);
 
+/**
+ * Громкость = ручка на деке × текущее затухание (LIFT, торможение мотора).
+ */
+let fade = 1;
+function setFade(f: number) {
+  fade = Math.min(1, Math.max(0, f));
+  audio.volume = Math.min(1, Math.max(0, useSettings.getState().volume * fade));
+}
+useSettings.subscribe((s, prev) => {
+  if (s.volume !== prev.volume) setFade(fade);
+});
+
 /** Будит звук по жесту пользователя: контекст Web Audio и цепочка «звука винила». */
 function wake() {
   try {
@@ -183,7 +196,7 @@ async function playCurrent(myGen: number, ramp: boolean) {
   soundingId = null;
   if (audio.src !== url) audio.src = url;
   audio.currentTime = st().positionMs / 1000;
-  audio.volume = 1;
+  setFade(1);
   const rate = SPEED_RATE[st().speed];
   setBaseRate(ramp ? rate * 0.82 : rate);
   try {
@@ -344,7 +357,7 @@ export async function stopMotor() {
     crackle.set("off");
     await tween(900, (k) => {
       setBaseRate(from * (1 - 0.75 * k));
-      audio.volume = 1 - k * k;
+      setFade(1 - k * k);
     });
   }
   if (myGen !== gen) return;
@@ -362,7 +375,7 @@ export async function toggleLift() {
   if (s.needle === "down") {
     const myGen = ++gen;
     crackle.set("off");
-    await tween(160, (k) => (audio.volume = 1 - k));
+    await tween(160, (k) => setFade(1 - k));
     if (myGen !== gen) return;
     audio.pause();
     set({ needle: "lifted" });
@@ -401,6 +414,20 @@ export async function nextTrack() {
   if (s.trackIdx + 1 < side.tracks.length) return seekTrack(s.trackIdx + 1);
   reportSkip();
   await goToSide((s.sideIdx + 1) % Math.max(1, s.sides.length), 0, true);
+}
+
+/** ♥ на деке. */
+export function likeCurrent() {
+  const t = currentTrack(st());
+  if (t) void toggleLike(t);
+}
+
+/** ✕ на деке: дизлайк и сразу следующий трек. */
+export async function dislikeCurrent() {
+  const t = currentTrack(st());
+  if (!t) return;
+  void dislike(t);
+  await nextTrack();
 }
 
 /** ◀◀ — в начало трека (если прошло > 3 с), иначе предыдущий трек или конец прошлой стороны. */

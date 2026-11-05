@@ -21,7 +21,7 @@ export type Account = {
 
 export class NotAuthorizedError extends Error {}
 
-async function get<T>(path: string, query?: Record<string, string>): Promise<T> {
+export async function get<T>(path: string, query?: Record<string, string>): Promise<T> {
   try {
     return await invoke<T>("ym_get", {
       path,
@@ -39,7 +39,7 @@ export function coverUrl(uri: string | undefined | null, size = 400): string | n
   return `https://${uri.replace("%%", `${size}x${size}`)}`;
 }
 
-async function post<T>(path: string, form: Record<string, string>): Promise<T> {
+export async function post<T>(path: string, form: Record<string, string>): Promise<T> {
   try {
     return await invoke<T>("ym_post", { path, form: Object.entries(form) });
   } catch (e) {

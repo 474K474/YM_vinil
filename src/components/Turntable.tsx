@@ -33,6 +33,7 @@ import {
 import { trackOffsets } from "../player/press";
 import { useStore } from "../store";
 import { toggleFullscreen } from "../fullscreen";
+import { DeckExtras } from "./DeckExtras";
 
 const { x: CX, y: CY } = CENTER;
 /** 33⅓ об/мин в градусах в секунду. */
@@ -317,6 +318,9 @@ export function Turntable() {
 
       {/* Ось */}
       <circle cx={CX} cy={CY} r="7" fill="url(#knob)" stroke="#555" strokeWidth=".6" />
+
+      {/* ♥, ✕ и громкость — правее шарнира, куда тонарм не заходит */}
+      <DeckExtras />
 
       {/* Подставка тонарма */}
       <rect x="650" y="388" width="20" height="54" rx="4" fill="#0a0a0a" stroke="#2e2e2e" />

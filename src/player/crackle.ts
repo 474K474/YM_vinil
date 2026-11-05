@@ -67,8 +67,8 @@ class Crackle {
     if (level !== "off") this.ensure();
     if (!this.ctx || !this.gain) return;
     void this.ctx.resume();
-    const { vinylSound, crackleVolume } = useSettings.getState();
-    const target = vinylSound ? GAIN[level] * crackleVolume : 0;
+    const { vinylSound, crackleVolume, volume } = useSettings.getState();
+    const target = vinylSound ? GAIN[level] * crackleVolume * volume : 0;
     this.gain.gain.setTargetAtTime(target, this.ctx.currentTime, 0.08);
   }
 }

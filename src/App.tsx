@@ -10,11 +10,17 @@ import { SettingsMenu } from "./components/SettingsMenu";
 import { FullscreenStage } from "./components/FullscreenStage";
 import { toggleFullscreen, useFullscreen } from "./fullscreen";
 import { updateSettings, useSettings } from "./settings";
+import { UpdateBanner } from "./components/UpdateBanner";
+import { startUpdateChecks } from "./updater";
 
 export default function App() {
   const { status, error, account, init, loadShelf, logout } = useStore();
   const fullscreen = useFullscreen((s) => s.on);
   const shelfHidden = useSettings((s) => s.shelfHidden);
+
+  useEffect(() => {
+    startUpdateChecks();
+  }, []);
 
   useEffect(() => {
     void init();
@@ -27,10 +33,17 @@ export default function App() {
 
   if (status === "checking") return <div className="splash" />;
   if (status === "logged-out") return <LoginScreen />;
-  if (fullscreen) return <FullscreenStage />;
+  if (fullscreen)
+    return (
+      <>
+        <FullscreenStage />
+        <UpdateBanner />
+      </>
+    );
 
   return (
     <div className="room">
+      <UpdateBanner />
       <div className="lamp-light" aria-hidden />
       <header className="topbar">
         <span className="brand">

@@ -32,8 +32,8 @@ jobs:
                 tag_name: tag,
                 target_commitish: context.sha,
                 name: `YM Vinil ${tag}`,
-                body: 'Тестовая сборка. Windows: скачайте файл -setup.exe или .msi ниже.',
-                prerelease: true,
+                body: 'Windows: скачайте файл -setup.exe ниже. Уже установленное приложение обновится само.',
+                prerelease: false,
               });
               return data.id;
             }
@@ -82,6 +82,9 @@ jobs:
       - uses: tauri-apps/tauri-action@v0
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          # Подпись обновлений: приватный ключ — секрет репозитория (без пароля).
+          TAURI_SIGNING_PRIVATE_KEY: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY }}
+          TAURI_SIGNING_PRIVATE_KEY_PASSWORD: ""
         with:
           releaseId: ${{ needs.create-release.outputs.id }}
           args: ${{ matrix.args }}

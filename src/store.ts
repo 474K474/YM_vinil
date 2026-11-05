@@ -9,6 +9,7 @@ import {
   logout as apiLogout,
 } from "./api/ym";
 import { eject, load } from "./player/engine";
+import { loadLikes } from "./player/likes";
 
 type Status = "checking" | "logged-out" | "loading" | "ready" | "error";
 
@@ -42,6 +43,7 @@ export const useStore = create<State>((set, get) => ({
     set({ status: "loading", error: null });
     try {
       const account = await fetchAccount();
+      void loadLikes(account.uid);
       const shelf = await fetchShelf(account);
       set({ status: "ready", account, shelf });
     } catch (e) {

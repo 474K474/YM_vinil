@@ -350,3 +350,31 @@ h1, h2 { font-family: var(--serif); font-weight: 600; margin: 0; }
 .stage-info { display: flex; align-items: center; gap: 12px; min-width: 0; }
 .stage-title { font: 600 18px var(--serif); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .side-badge.small { width: 30px; height: 30px; font-size: 15px; }
+
+/* ── Плашка обновления ─────────────────────── */
+.update-plate {
+  position: fixed; left: 50%; bottom: 18px; transform: translateX(-50%); z-index: 50;
+  display: flex; align-items: center; gap: 12px; flex-wrap: wrap; justify-content: center;
+  padding: 10px 14px 10px 16px; border-radius: 10px; color: #2b1d0e; font-size: 14px;
+  background: linear-gradient(180deg, #e7c88a, #b98c45);
+  box-shadow: 0 14px 30px rgba(0,0,0,.55), inset 0 1px 0 rgba(255,255,255,.5), 0 0 0 1px #7a5a2c;
+}
+.update-dot { width: 8px; height: 8px; border-radius: 50%; background: #c0392b; box-shadow: 0 0 8px #ff5a3d; }
+.update-btn {
+  border: 1px solid #6b4a1e; border-radius: 6px; padding: 5px 12px; font-size: 13px; font-weight: 600;
+  background: #2b1d0e; color: #f6dcae;
+}
+.update-btn.quiet { background: transparent; color: #2b1d0e; }
+.update-bar { width: 140px; height: 6px; border-radius: 3px; background: #6b4a1e55; overflow: hidden; }
+.update-bar > span { display: block; height: 100%; background: #2b1d0e; transition: width .2s; }
+.update-err { flex-basis: 100%; text-align: center; font-size: 12px; color: #6b1a12; }
+
+/* ── Лайк, дизлайк, громкость на деке ──────── */
+.round-key-face { fill: url(#chrome); transition: filter .2s; }
+.round-key:hover .round-key-face { filter: brightness(1.12); }
+.round-key:active .round-key-face { filter: brightness(.9); }
+.round-key .heart { fill: #3a3a3a; transition: fill .25s, filter .25s; }
+.round-key.liked .heart { fill: #e0312b; filter: drop-shadow(0 0 3px #ff4b3a); }
+.round-key.off { opacity: .45; cursor: default; }
+.volume-knob { cursor: ns-resize; touch-action: none; }
+.volume-arc { stroke: var(--amber); filter: drop-shadow(0 0 3px rgba(240,166,74,.8)); }
