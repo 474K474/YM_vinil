@@ -1,7 +1,9 @@
 import { useEffect, useState } from "react";
 import { setFullscreen } from "../fullscreen";
 import { currentSide, currentTrack, usePlayer } from "../player/engine";
+import { updateSettings, useSettings } from "../settings";
 import { useStore } from "../store";
+import { SleeveBack } from "./SleeveBack";
 import { Turntable } from "./Turntable";
 
 /** Проигрыватель на весь экран: только дека и тонкая строка с треком. */
@@ -11,6 +13,7 @@ export function FullscreenStage() {
   const track = currentTrack(p);
   const side = currentSide(p);
   const [idle, setIdle] = useState(false);
+  const drawer = useSettings((s) => s.fsTracklist);
 
   // Строка и курсор гаснут через 3 с без движения мыши.
   useEffect(() => {
@@ -30,7 +33,22 @@ export function FullscreenStage() {
   }, []);
 
   return (
-    <div className={`stage ${idle ? "idle" : ""}`}>
+    <div className={`stage ${idle ? "idle" : ""} ${drawer ? "drawer-open" : ""}`}>
+      <aside className="fs-drawer" aria-hidden={!drawer}>
+        <div className="fs-drawer-inner">
+          <SleeveBack />
+        </div>
+      </aside>
+      <button
+        className="fs-tab"
+        onClick={() => updateSettings({ fsTracklist: !drawer })}
+        aria-expanded={drawer}
+        title={drawer ? "Свернуть треклист" : "Открыть треклист"}
+      >
+        <span className="fs-tab-arrow">{drawer ? "‹" : "›"}</span>
+        <span className="fs-tab-text">Треклист</span>
+      </button>
+      <div className="stage-center">
       <div className="stage-deck">
         <Turntable />
       </div>
@@ -51,6 +69,7 @@ export function FullscreenStage() {
         <button className="lamp-btn" onClick={() => void setFullscreen(false)}>
           Выйти · Esc
         </button>
+      </div>
       </div>
     </div>
   );

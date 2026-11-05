@@ -14,6 +14,8 @@ export type Settings = {
   hiddenSections: string[];
   /** Вся полка спрятана. */
   shelfHidden: boolean;
+  /** Треклист открыт в полноэкранном режиме. */
+  fsTracklist: boolean;
 };
 
 const KEY = "ym-vinil:settings";
@@ -24,6 +26,7 @@ const defaults: Settings = {
   autoFlip: false,
   hiddenSections: [],
   shelfHidden: false,
+  fsTracklist: false,
 };
 
 function read(): Settings {

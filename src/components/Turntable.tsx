@@ -263,7 +263,8 @@ export function Turntable() {
         <circle cx={CX} cy={CY} r={RECORD_R - 6} fill="none" stroke="#252525" strokeWidth="18" strokeDasharray="2 10" />
       </g>
 
-      <AnimatePresence>
+      {/* initial={false}: при переходе в полный экран и обратно пластинка не «въезжает» заново */}
+      <AnimatePresence initial={false}>
         {record && (
           <motion.g
             key={record.key}

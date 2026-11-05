@@ -8,7 +8,38 @@ on:
   workflow_dispatch:
 
 jobs:
+  # Релиз создаётся один раз заранее — иначе параллельные сборки плодят дубли.
+  create-release:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    outputs:
+      id: ${{ steps.rel.outputs.result }}
+    steps:
+      - uses: actions/checkout@v4
+      - id: rel
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const version = require('./src-tauri/tauri.conf.json').version;
+            const tag = `v${version}`;
+            try {
+              const { data } = await github.rest.repos.getReleaseByTag({ ...context.repo, tag });
+              return data.id;
+            } catch {
+              const { data } = await github.rest.repos.createRelease({
+                ...context.repo,
+                tag_name: tag,
+                target_commitish: context.sha,
+                name: `YM Vinil ${tag}`,
+                body: 'Тестовая сборка. Windows: скачайте файл -setup.exe или .msi ниже.',
+                prerelease: true,
+              });
+              return data.id;
+            }
+
   build:
+    needs: create-release
     permissions:
       contents: write
     strategy:
@@ -52,9 +83,5 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
-          tagName: v__VERSION__
-          releaseName: "YM Vinil v__VERSION__"
-          releaseBody: "Тестовая сборка. Windows: скачайте файл .msi или -setup.exe ниже."
-          releaseDraft: false
-          prerelease: true
+          releaseId: ${{ needs.create-release.outputs.id }}
           args: ${{ matrix.args }}
