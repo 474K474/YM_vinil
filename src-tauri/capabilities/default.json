@@ -1,0 +1,7 @@
+{
+  "$schema": "../gen/schemas/desktop-schema.json",
+  "identifier": "default",
+  "description": "Права главного окна. Окно входа (внешняя страница Яндекса) намеренно не получает никаких прав.",
+  "windows": ["main"],
+  "permissions": ["core:default"]
+}
