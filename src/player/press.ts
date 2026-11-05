@@ -82,9 +82,9 @@ export function splitSides(tracks: Track[]): [Track[], Track[]] {
 const letter = (i: number) => String.fromCharCode(65 + (i % 26));
 
 /** Тома (volumes) → диски → стороны с буквами сквозь все диски. */
-export function press(volumes: Track[][]): Disc[] {
+export function press(volumes: Track[][], firstSide = 0): Disc[] {
   const discs: Disc[] = [];
-  let sideIndex = 0;
+  let sideIndex = firstSide;
   for (const volume of volumes) {
     for (const discTracks of splitEvenly(volume, DISC_CAPACITY_MS)) {
       const [a, b] = splitSides(discTracks);

@@ -51,6 +51,11 @@ describe("press", () => {
     expect(allSides(discs).map((s) => s.letter)).toEqual(["A", "B", "C", "D", "E", "F"]);
   });
 
+  it("продолжение нумерации для следующих дисков волны", () => {
+    const discs = press([tracks(5, 5, 5, 5)], 2);
+    expect(allSides(discs).map((s) => s.letter)).toEqual(["C", "D"]);
+  });
+
   it("смещения треков внутри стороны", () => {
     const [disc] = press([tracks(3, 4, 5, 6)]);
     expect(trackOffsets(disc.sides[0])).toEqual([0, min(3)]);

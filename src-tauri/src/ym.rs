@@ -70,6 +70,42 @@ pub async fn ym_post(path: String, form: Vec<(String, String)>) -> Result<Value,
     send(client()?.post(format!("{API}{path}")).form(&form)).await
 }
 
+/// POST с JSON-телом (ротор «Моей волны»).
+#[tauri::command]
+pub async fn ym_post_json(path: String, body: Value) -> Result<Value, String> {
+    check_path(&path)?;
+    send(client()?.post(format!("{API}{path}")).json(&body)).await
+}
+
+/// Хранилище треков Яндекса — только *.yandex.net / *.yandex.ru.
+fn is_yandex_storage(url: &url::Url) -> bool {
+    url.scheme() == "https"
+        && url
+            .host_str()
+            .is_some_and(|h| h.ends_with(".yandex.net") || h.ends_with(".yandex.ru"))
+}
+
+/// mp3 трека целиком. В браузер он попадает как blob — так звук можно
+/// обработать в Web Audio («звук винила») без ограничений CORS.
+#[tauri::command]
+pub async fn track_bytes(track_id: String) -> Result<tauri::ipc::Response, String> {
+    let url: url::Url = resolve_track_url(&track_id).await?.parse().map_err(|e: url::ParseError| e.to_string())?;
+    if !is_yandex_storage(&url) {
+        return Err("bad_storage_host".into());
+    }
+    let bytes = client()?
+        .get(url)
+        .send()
+        .await
+        .map_err(|e| e.to_string())?
+        .error_for_status()
+        .map_err(|e| e.to_string())?
+        .bytes()
+        .await
+        .map_err(|e| e.to_string())?;
+    Ok(tauri::ipc::Response::new(bytes.to_vec()))
+}
+
 /// Байты обложки — чтобы React посчитал цвет без проблем с CORS у canvas.
 /// Только с avatars.yandex.net и без токена: обложки публичные.
 #[tauri::command]
@@ -112,6 +148,10 @@ fn xml_tag<'a>(xml: &'a str, tag: &str) -> Option<&'a str> {
 /// Нужна активная подписка Плюс у пользователя.
 #[tauri::command]
 pub async fn track_url(track_id: String) -> Result<String, String> {
+    resolve_track_url(&track_id).await
+}
+
+async fn resolve_track_url(track_id: &str) -> Result<String, String> {
     if !track_id.chars().all(|c| c.is_ascii_alphanumeric() || c == ':') {
         return Err("bad_track_id".into());
     }
@@ -153,6 +193,16 @@ mod tests {
         assert!(check_path("https://evil.example/x").is_err());
         assert!(check_path("@evil.example").is_err());
         assert!(check_path("/../x").is_err());
+    }
+
+    #[test]
+    fn storage_hosts_only() {
+        let ok: url::Url = "https://s123vla.storage.yandex.net/get-mp3/x".parse().unwrap();
+        let bad: url::Url = "https://evil.example/yandex.net".parse().unwrap();
+        let http: url::Url = "http://s1.storage.yandex.net/x".parse().unwrap();
+        assert!(is_yandex_storage(&ok));
+        assert!(!is_yandex_storage(&bad));
+        assert!(!is_yandex_storage(&http));
     }
 
     #[test]

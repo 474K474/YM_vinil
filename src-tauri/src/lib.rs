@@ -10,6 +10,8 @@ pub fn run() {
             auth::logout,
             ym::ym_get,
             ym::ym_post,
+            ym::ym_post_json,
+            ym::track_bytes,
             ym::cover_bytes,
             ym::track_url,
         ])

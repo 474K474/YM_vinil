@@ -7,9 +7,14 @@ import { Turntable } from "./components/Turntable";
 import { NowPlaying } from "./components/NowPlaying";
 import { SleeveBack } from "./components/SleeveBack";
 import { SettingsMenu } from "./components/SettingsMenu";
+import { FullscreenStage } from "./components/FullscreenStage";
+import { toggleFullscreen, useFullscreen } from "./fullscreen";
+import { updateSettings, useSettings } from "./settings";
 
 export default function App() {
   const { status, error, account, init, loadShelf, logout } = useStore();
+  const fullscreen = useFullscreen((s) => s.on);
+  const shelfHidden = useSettings((s) => s.shelfHidden);
 
   useEffect(() => {
     void init();
@@ -22,41 +27,54 @@ export default function App() {
 
   if (status === "checking") return <div className="splash" />;
   if (status === "logged-out") return <LoginScreen />;
+  if (fullscreen) return <FullscreenStage />;
 
   return (
     <div className="room">
+      <div className="lamp-light" aria-hidden />
       <header className="topbar">
-        <span className="brand">YM&nbsp;Vinil</span>
+        <span className="brand">
+          <span className="brand-dot" />
+          YM&nbsp;Vinil
+        </span>
         {account && (
           <span className="who">
             {account.name}
             {!account.hasPlus && <em className="warn"> · без Плюса треки не заиграют</em>}
           </span>
         )}
+        <button className="lamp-btn" onClick={() => void toggleFullscreen()} title="F11">
+          На весь экран
+        </button>
+        <button className="lamp-btn" onClick={() => updateSettings({ shelfHidden: !shelfHidden })}>
+          {shelfHidden ? "Показать полку" : "Скрыть полку"}
+        </button>
         <SettingsMenu />
-        <button className="ghost" onClick={() => void logout()}>
+        <button className="lamp-btn quiet" onClick={() => void logout()}>
           Выйти
         </button>
       </header>
 
-      <main className="layout">
+      <main className={`layout ${shelfHidden ? "no-shelf" : ""}`}>
         <section className="deck">
           <Turntable />
           <NowPlaying />
           <SleeveBack />
         </section>
-        <section className="shelf-wrap">
-          {status === "loading" && <p className="muted">Достаём пластинки с полки…</p>}
-          {status === "error" && (
-            <p className="muted">
-              Не получилось загрузить полку: {error}{" "}
-              <button className="ghost" onClick={() => void loadShelf()}>
-                Ещё раз
-              </button>
-            </p>
-          )}
-          {status === "ready" && <Shelf />}
-        </section>
+        {!shelfHidden && (
+          <section className="shelf-wrap">
+            {status === "loading" && <p className="muted">Достаём пластинки с полки…</p>}
+            {status === "error" && (
+              <p className="muted">
+                Не получилось загрузить полку: {error}{" "}
+                <button className="lamp-btn" onClick={() => void loadShelf()}>
+                  Ещё раз
+                </button>
+              </p>
+            )}
+            {status === "ready" && <Shelf />}
+          </section>
+        )}
       </main>
     </div>
   );

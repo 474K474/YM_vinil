@@ -4,6 +4,7 @@
  */
 
 import { useSettings } from "../settings";
+import { audioCtx } from "./fx";
 
 export type CrackleLevel = "off" | "play" | "gap";
 
@@ -46,7 +47,7 @@ class Crackle {
   /** Создаётся по жесту пользователя (кнопка мотора), иначе браузер заблокирует звук. */
   private ensure() {
     if (this.ctx) return;
-    const ctx = new AudioContext();
+    const ctx = audioCtx();
     const src = ctx.createBufferSource();
     src.buffer = makeNoise(ctx);
     src.loop = true;
@@ -66,7 +67,8 @@ class Crackle {
     if (level !== "off") this.ensure();
     if (!this.ctx || !this.gain) return;
     void this.ctx.resume();
-    const target = GAIN[level] * useSettings.getState().crackleVolume;
+    const { vinylSound, crackleVolume } = useSettings.getState();
+    const target = vinylSound ? GAIN[level] * crackleVolume : 0;
     this.gain.gain.setTargetAtTime(target, this.ctx.currentTime, 0.08);
   }
 }

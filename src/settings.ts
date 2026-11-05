@@ -2,14 +2,29 @@
 import { create } from "zustand";
 
 export type Settings = {
+  /** Главный переключатель «звука винила»: тон, насыщение, плавание, треск. */
+  vinylSound: boolean;
+  /** Сила эффекта 0…1. */
+  vinylAmount: number;
   /** Громкость треска 0…1. */
   crackleVolume: number;
   /** В конце стороны перевернуть и играть дальше. */
   autoFlip: boolean;
+  /** Скрытые разделы полки. */
+  hiddenSections: string[];
+  /** Вся полка спрятана. */
+  shelfHidden: boolean;
 };
 
 const KEY = "ym-vinil:settings";
-const defaults: Settings = { crackleVolume: 0.6, autoFlip: false };
+const defaults: Settings = {
+  vinylSound: true,
+  vinylAmount: 0.6,
+  crackleVolume: 0.6,
+  autoFlip: false,
+  hiddenSections: [],
+  shelfHidden: false,
+};
 
 function read(): Settings {
   try {

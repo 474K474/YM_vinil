@@ -3,5 +3,5 @@
   "identifier": "default",
   "description": "Права главного окна. Окно входа (внешняя страница Яндекса) намеренно не получает никаких прав.",
   "windows": ["main"],
-  "permissions": ["core:default"]
+  "permissions": ["core:default", "core:window:allow-set-fullscreen", "core:window:allow-is-fullscreen"]
 }

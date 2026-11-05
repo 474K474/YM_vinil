@@ -3,7 +3,7 @@ import { invoke } from "@tauri-apps/api/core";
 /** Пластинка на полке: плейлист или альбом из Яндекс Музыки. */
 export type RecordItem = {
   key: string;
-  kind: "playlist" | "album" | "likes";
+  kind: "playlist" | "album" | "likes" | "wave";
   /** id альбома или kind плейлиста */
   sourceId: string;
   ownerUid?: number;
@@ -42,6 +42,15 @@ export function coverUrl(uri: string | undefined | null, size = 400): string | n
 async function post<T>(path: string, form: Record<string, string>): Promise<T> {
   try {
     return await invoke<T>("ym_post", { path, form: Object.entries(form) });
+  } catch (e) {
+    if (e === "not_authorized") throw new NotAuthorizedError();
+    throw new Error(String(e));
+  }
+}
+
+export async function postJson<T>(path: string, body: unknown): Promise<T> {
+  try {
+    return await invoke<T>("ym_post_json", { path, body });
   } catch (e) {
     if (e === "not_authorized") throw new NotAuthorizedError();
     throw new Error(String(e));
@@ -123,31 +132,47 @@ export async function fetchShelf(account: Account): Promise<RecordItem[]> {
       trackCount: a.trackCount ?? 0,
     }));
 
-  return [likes, ...fromPlaylists, ...fromAlbums];
+  const wave: RecordItem = {
+    key: "wave",
+    kind: "wave",
+    sourceId: "user:onyourwave",
+    ownerUid: account.uid,
+    title: "Моя волна",
+    subtitle: "Бесконечная пластинка",
+    cover: null,
+    trackCount: 0,
+  };
+
+  return [wave, likes, ...fromPlaylists, ...fromAlbums];
 }
 
 // ── Треки ────────────────────────────────────────────────
 
 export type Track = {
   id: string;
+  /** id:albumId — так трек называют ротор и очередь. */
+  queueId?: string;
   title: string;
   artists: string;
   durationMs: number;
 };
 
-type RawTrack = {
+export type RawTrack = {
   id: string | number;
   title: string;
   version?: string;
   durationMs?: number;
   available?: boolean;
   artists?: { name: string }[];
+  albums?: { id: number }[];
 };
 
-function toTrack(t: RawTrack): Track | null {
+export function toTrack(t: RawTrack): Track | null {
   if (t.available === false || !t.durationMs) return null;
+  const albumId = t.albums?.[0]?.id;
   return {
     id: String(t.id),
+    queueId: albumId ? `${t.id}:${albumId}` : String(t.id),
     title: t.version ? `${t.title} (${t.version})` : t.title,
     artists: t.artists?.map((a) => a.name).join(", ") ?? "",
     durationMs: t.durationMs,
@@ -199,3 +224,4 @@ export async function fetchRecordTracks(record: RecordItem): Promise<Track[][]> 
 }
 
 export const trackUrl = (trackId: string) => invoke<string>("track_url", { trackId });
+export const trackBytes = (trackId: string) => invoke<ArrayBuffer>("track_bytes", { trackId });

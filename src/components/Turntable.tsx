@@ -24,12 +24,15 @@ import {
   currentSide,
   cycleSpeed,
   seekTrack,
+  nextTrack,
+  prevTrack,
   toggleLift,
   toggleMotor,
   usePlayer,
 } from "../player/engine";
 import { trackOffsets } from "../player/press";
 import { useStore } from "../store";
+import { toggleFullscreen } from "../fullscreen";
 
 const { x: CX, y: CY } = CENTER;
 /** 33⅓ об/мин в градусах в секунду. */
@@ -191,9 +194,15 @@ export function Turntable() {
         </clipPath>
       </defs>
 
-      {/* Корпус из ореха */}
-      <rect width={DECK_W} height={DECK_H} rx="10" fill="url(#walnut)" />
-      <rect width={DECK_W} height={DECK_H} rx="10" fill="#000" filter="url(#grain)" />
+      {/* Корпус из ореха (двойной клик — полный экран) */}
+      <rect
+        width={DECK_W}
+        height={DECK_H}
+        rx="10"
+        fill="url(#walnut)"
+        onDoubleClick={() => void toggleFullscreen()}
+      />
+      <rect width={DECK_W} height={DECK_H} rx="10" fill="#000" filter="url(#grain)" pointerEvents="none" />
 
       {/* Серебристая дека */}
       <rect x="54" y="20" width="652" height="540" rx="16" fill="#00000055" transform="translate(0 4)" />
@@ -229,6 +238,23 @@ export function Turntable() {
           {p.motor ? "СТОП" : "ПУСК"}
         </text>
       </g>
+
+      {/* Клавиши ◀◀ / ▶▶ */}
+      {[
+        { x: 528, dir: -1, act: prevTrack, label: "Предыдущий трек" },
+        { x: 556, dir: 1, act: nextTrack, label: "Следующий трек" },
+      ].map(({ x, dir, act, label }) => (
+        <g key={x} className="control cue" onClick={() => void act()} aria-label={label}>
+          <title>{label}</title>
+          <rect x={x} y="520" width="24" height="18" rx="3" fill="#1b1b1b" />
+          <rect x={x + 2} y="522" width="20" height="14" rx="2" fill="url(#chrome)" className="cue-key" />
+          <g transform={`translate(${x + 12} 529) scale(${dir} 1)`} fill="#2a2a2a">
+            <path d="M -6 -3.5 L -1 0 L -6 3.5 Z" />
+            <path d="M -1 -3.5 L 4 0 L -1 3.5 Z" />
+          </g>
+        </g>
+      ))}
+      <text x="554" y="553" className="engrave">ТРЕК</text>
 
       {/* Диск: резиновый мат, поверх — пластинка */}
       <circle cx={CX} cy={CY} r={RECORD_R + 2} fill="#00000066" filter="url(#soft)" transform="translate(6 8)" />
