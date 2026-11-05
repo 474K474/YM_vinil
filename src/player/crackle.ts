@@ -3,6 +3,8 @@
  * Музыкальный поток не трогаем — треск просто звучит поверх.
  */
 
+import { useSettings } from "../settings";
+
 export type CrackleLevel = "off" | "play" | "gap";
 
 const GAIN: Record<CrackleLevel, number> = { off: 0, play: 0.05, gap: 0.14 };
@@ -34,7 +36,12 @@ function makeNoise(ctx: AudioContext, seconds = 6): AudioBuffer {
 class Crackle {
   private ctx: AudioContext | null = null;
   private gain: GainNode | null = null;
-  enabled = true;
+  private level: CrackleLevel = "off";
+
+  constructor() {
+    // Ползунок громкости в настройках действует сразу.
+    useSettings.subscribe(() => this.set(this.level));
+  }
 
   /** Создаётся по жесту пользователя (кнопка мотора), иначе браузер заблокирует звук. */
   private ensure() {
@@ -55,10 +62,11 @@ class Crackle {
   }
 
   set(level: CrackleLevel) {
+    this.level = level;
     if (level !== "off") this.ensure();
     if (!this.ctx || !this.gain) return;
     void this.ctx.resume();
-    const target = this.enabled ? GAIN[level] : 0;
+    const target = GAIN[level] * useSettings.getState().crackleVolume;
     this.gain.gain.setTargetAtTime(target, this.ctx.currentTime, 0.08);
   }
 }

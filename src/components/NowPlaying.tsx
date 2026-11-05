@@ -24,7 +24,7 @@ export function NowPlaying() {
   return (
     <div className="now">
       <div className="now-head">
-        {record.cover && <img className="now-cover" src={record.cover} alt="" />}
+        {record.cover && <img className="now-cover" src={record.cover} alt="" onError={(e) => (e.currentTarget.style.display = "none")} />}
         <div>
           <h2>{record.title}</h2>
           <p className="muted">{record.subtitle}</p>
@@ -36,7 +36,7 @@ export function NowPlaying() {
 
       {side && track && !p.sideEnded && (
         <div className="now-track">
-          <span className="side-badge">{side.letter}</span>
+          <span className="side-badge" style={{ background: p.labelColor }}>{side.letter}</span>
           <div>
             <div className="now-title">
               {p.trackIdx + 1}. {track.title}
@@ -51,7 +51,7 @@ export function NowPlaying() {
 
       {p.sideEnded && (
         <div className="now-track">
-          <span className="side-badge">{side?.letter}</span>
+          <span className="side-badge" style={{ background: p.labelColor }}>{side?.letter}</span>
           <div>
             <div className="now-title">Сторона доиграна</div>
             <button className="primary small-btn" onClick={() => void flip()}>

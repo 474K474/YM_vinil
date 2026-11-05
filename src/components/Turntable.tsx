@@ -1,6 +1,6 @@
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, useState } from "react";
 import type { MouseEvent, ReactNode } from "react";
-import { AnimatePresence, motion } from "motion/react";
+import { AnimatePresence, motion, useAnimate } from "motion/react";
 import {
   CENTER,
   DECK_H,
@@ -18,6 +18,7 @@ import {
 } from "../player/geometry";
 import {
   type Speed,
+  FLIP_MS,
   SPEED_RATE,
   armRadius,
   currentSide,
@@ -76,7 +77,27 @@ function wedge(fromDeg: number, toDeg: number, r: number) {
 export function Turntable() {
   const record = useStore((s) => s.onPlatter);
   const p = usePlayer();
-  const side = currentSide(p);
+  // При перевороте сторона на лейбле и кольца меняются в середине движения.
+  const [shownSideIdx, setShownSideIdx] = useState(p.sideIdx);
+  const [flipScope, animateFlip] = useAnimate<SVGGElement>();
+  const lastFlip = useRef(p.flipCount);
+  useEffect(() => {
+    if (p.flipCount === lastFlip.current) {
+      setShownSideIdx(p.sideIdx);
+      return;
+    }
+    lastFlip.current = p.flipCount;
+    if (flipScope.current) {
+      void animateFlip(
+        flipScope.current,
+        { scaleX: [1, 0.02, 1] },
+        { duration: FLIP_MS / 1000, ease: "easeInOut" },
+      );
+    }
+    const t = setTimeout(() => setShownSideIdx(p.sideIdx), FLIP_MS / 2);
+    return () => clearTimeout(t);
+  }, [p.flipCount, p.sideIdx, animateFlip, flipScope]);
+  const side = p.sides[shownSideIdx] ?? currentSide(p);
   const spinRef = useSpin(p.motor, p.speed);
   const svgRef = useRef<SVGSVGElement>(null);
 
@@ -225,13 +246,15 @@ export function Turntable() {
             exit={{ x: 420, opacity: 0 }}
             transition={{ type: "spring", stiffness: 120, damping: 20 }}
           >
+            <g ref={flipScope} style={{ transformBox: "fill-box", transformOrigin: "center" }}>
             <g
               className={side ? "grooves-hit" : undefined}
               onClick={onRecordClick}
               clipPath="url(#recordClip)"
             >
-              <circle cx={CX} cy={CY} r={RECORD_R} fill="#0c0c0c" />
+              <circle cx={CX} cy={CY} r={RECORD_R} fill={p.vinylTint} />
               <circle cx={CX} cy={CY} r={GROOVE_OUTER_R} fill="url(#grooves)" />
+              <circle cx={CX} cy={CY} r={GROOVE_OUTER_R} fill={p.labelColor} opacity=".07" />
               {gaps.map((gr) => (
                 <g key={gr}>
                   <circle cx={CX} cy={CY} r={gr} fill="none" stroke="#080808" strokeWidth="2.2" />
@@ -243,7 +266,7 @@ export function Turntable() {
 
               {/* Вращается только лейбл: бороздки симметричны, блики стоят */}
               <LabelSpin motor={p.motor} speed={p.speed}>
-                  <circle cx={CX} cy={CY} r={LABEL_R} fill="#7a1f24" />
+                  <circle cx={CX} cy={CY} r={LABEL_R} fill={p.labelColor} style={{ transition: "fill .8s" }} />
                   <circle cx={CX} cy={CY} r={LABEL_R - 4} fill="none" stroke="#d6b36a55" strokeWidth=".8" />
                   <circle cx={CX} cy={CY} r={LABEL_R - 30} fill="none" stroke="#00000033" strokeWidth="1" />
                   <text x={CX} y={CY - 52} className="label-brand">YM VINIL</text>
@@ -259,6 +282,7 @@ export function Turntable() {
                 <path d={wedge(24, 52, RECORD_R)} fill="#fff" opacity=".06" />
               </g>
               <circle cx={CX} cy={CY} r={LABEL_R} fill="none" stroke="#00000066" strokeWidth="2" />
+            </g>
             </g>
           </motion.g>
         )}

@@ -5,6 +5,8 @@
  */
 import { create } from "zustand";
 import { type RecordItem, type Track, fetchRecordTracks, trackUrl } from "../api/ym";
+import { useSettings } from "../settings";
+import { DEFAULT_LABEL, coverColor, labelColor, vinylTint } from "./color";
 import { crackle } from "./crackle";
 import { RUNOUT_R, grooveRadius } from "./geometry";
 import { type Side, allSides, press, trackOffsets } from "./press";
@@ -30,6 +32,11 @@ export type PlayerState = {
   runout: boolean;
   /** Сторона доиграна — ждём «Перевернуть». */
   sideEnded: boolean;
+  /** Растёт при каждом перевороте — UI проигрывает анимацию. */
+  flipCount: number;
+  /** Цвет лейбла и оттенок винила под обложку. */
+  labelColor: string;
+  vinylTint: string;
 };
 
 const initial: PlayerState = {
@@ -45,6 +52,9 @@ const initial: PlayerState = {
   needle: "rest",
   runout: false,
   sideEnded: false,
+  flipCount: 0,
+  labelColor: DEFAULT_LABEL,
+  vinylTint: "#0c0c0c",
 };
 
 export const usePlayer = create<PlayerState>(() => initial);
@@ -180,7 +190,18 @@ async function onTrackEnded() {
   await wait(700);
   if (myGen !== gen) return;
   set({ motor: false });
+
+  if (useSettings.getState().autoFlip && st().sides.length > 0) {
+    await wait(600);
+    if (myGen !== gen) return;
+    await flip();
+    await wait(FLIP_MS);
+    if (st().record) await startMotor();
+  }
 }
+
+/** Длительность анимации переворота (синхронно с Turntable). */
+export const FLIP_MS = 750;
 
 // ── Действия ────────────────────────────────────────────
 
@@ -194,6 +215,11 @@ export async function load(record: RecordItem) {
   hardStop();
   const myGen = gen;
   set({ ...initial, speed: st().speed, record, loading: true });
+  if (record.cover) {
+    void coverColor(record.cover).then((c) => {
+      if (c && st().record?.key === record.key) set({ labelColor: labelColor(c), vinylTint: vinylTint(c) });
+    });
+  }
   try {
     const volumes = await fetchRecordTracks(record);
     if (myGen !== gen) return;
@@ -305,7 +331,34 @@ export async function flip() {
     positionMs: 0,
     sideEnded: false,
     runout: false,
+    flipCount: st().flipCount + 1,
   });
+}
+
+/**
+ * Клик по треку на обратной стороне конверта.
+ * Та же сторона — игла на трек; другая — переворот (если мотор крутился, играем дальше).
+ */
+export async function playFrom(sideIdx: number, trackIdx: number) {
+  const s = st();
+  if (sideIdx === s.sideIdx) {
+    if (s.sideEnded) set({ sideEnded: false });
+    await seekTrack(trackIdx);
+    return;
+  }
+  const wasPlaying = s.motor;
+  if (wasPlaying) await stopMotor();
+  gen++;
+  set({
+    sideIdx,
+    trackIdx,
+    positionMs: 0,
+    sideEnded: false,
+    runout: false,
+    flipCount: st().flipCount + 1,
+  });
+  await wait(FLIP_MS);
+  if (wasPlaying) await startMotor();
 }
 
 /** Подпись для кнопки переворота: та же пластинка или следующий диск. */
@@ -317,3 +370,54 @@ export function flipLabel(s: PlayerState): string {
     ? `Перевернуть на сторону ${s.sides[next].letter}`
     : `Следующий диск (${s.sides[next].letter})`;
 }
+
+// ── Системный плеер (Media Session) ─────────────────────
+
+function setupMediaSession() {
+  const ms = typeof navigator !== "undefined" ? navigator.mediaSession : undefined;
+  if (!ms) return;
+
+  let lastKey = "";
+  usePlayer.subscribe((s) => {
+    const track = currentTrack(s);
+    const key = `${s.record?.key}|${s.sideIdx}|${s.trackIdx}`;
+    if (track && s.record && key !== lastKey) {
+      lastKey = key;
+      ms.metadata = new MediaMetadata({
+        title: track.title,
+        artist: track.artists,
+        album: `${s.record.title} · сторона ${currentSide(s)?.letter ?? ""}`,
+        artwork: s.record.cover ? [{ src: s.record.cover, sizes: "400x400", type: "image/jpeg" }] : [],
+      });
+    }
+    if (!s.record) {
+      lastKey = "";
+      ms.metadata = null;
+    }
+    ms.playbackState = s.needle === "down" ? "playing" : s.record ? "paused" : "none";
+  });
+
+  const handlers: [MediaSessionAction, () => void][] = [
+    [
+      "play",
+      () => {
+        const s = st();
+        if (s.needle === "lifted") void toggleLift();
+        else if (!s.motor) void startMotor();
+      },
+    ],
+    ["pause", () => st().needle === "down" && void toggleLift()],
+    ["stop", () => void stopMotor()],
+    ["nexttrack", () => void seekTrack(st().trackIdx + 1)],
+    ["previoustrack", () => void seekTrack(st().positionMs > 3000 ? st().trackIdx : st().trackIdx - 1)],
+  ];
+  for (const [action, fn] of handlers) {
+    try {
+      ms.setActionHandler(action, fn);
+    } catch {
+      /* действие не поддерживается этой платформой */
+    }
+  }
+}
+
+setupMediaSession();

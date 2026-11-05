@@ -1,6 +1,6 @@
 [package]
 name = "ym-vinil"
-version = "0.1.0"
+version = "0.2.0"
 description = "Пластиночная оболочка для Яндекс Музыки"
 authors = ["474K474"]
 license = "MIT"

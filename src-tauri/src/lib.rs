@@ -10,6 +10,7 @@ pub fn run() {
             auth::logout,
             ym::ym_get,
             ym::ym_post,
+            ym::cover_bytes,
             ym::track_url,
         ])
         .run(tauri::generate_context!())

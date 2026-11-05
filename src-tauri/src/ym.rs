@@ -70,6 +70,30 @@ pub async fn ym_post(path: String, form: Vec<(String, String)>) -> Result<Value,
     send(client()?.post(format!("{API}{path}")).form(&form)).await
 }
 
+/// Байты обложки — чтобы React посчитал цвет без проблем с CORS у canvas.
+/// Только с avatars.yandex.net и без токена: обложки публичные.
+#[tauri::command]
+pub async fn cover_bytes(url: String) -> Result<tauri::ipc::Response, String> {
+    let parsed = url::Url::parse(&url).map_err(|e| e.to_string())?;
+    if parsed.scheme() != "https" || parsed.host_str() != Some("avatars.yandex.net") {
+        return Err("bad_cover_host".into());
+    }
+    let bytes = client()?
+        .get(parsed)
+        .send()
+        .await
+        .map_err(|e| e.to_string())?
+        .error_for_status()
+        .map_err(|e| e.to_string())?
+        .bytes()
+        .await
+        .map_err(|e| e.to_string())?;
+    if bytes.len() > 5 * 1024 * 1024 {
+        return Err("cover_too_big".into());
+    }
+    Ok(tauri::ipc::Response::new(bytes.to_vec()))
+}
+
 #[derive(Deserialize)]
 #[serde(rename_all = "camelCase")]
 struct DownloadInfo {

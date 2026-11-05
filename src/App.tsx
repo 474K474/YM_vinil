@@ -5,6 +5,8 @@ import { LoginScreen } from "./components/LoginScreen";
 import { Shelf } from "./components/Shelf";
 import { Turntable } from "./components/Turntable";
 import { NowPlaying } from "./components/NowPlaying";
+import { SleeveBack } from "./components/SleeveBack";
+import { SettingsMenu } from "./components/SettingsMenu";
 
 export default function App() {
   const { status, error, account, init, loadShelf, logout } = useStore();
@@ -31,6 +33,7 @@ export default function App() {
             {!account.hasPlus && <em className="warn"> · без Плюса треки не заиграют</em>}
           </span>
         )}
+        <SettingsMenu />
         <button className="ghost" onClick={() => void logout()}>
           Выйти
         </button>
@@ -40,6 +43,7 @@ export default function App() {
         <section className="deck">
           <Turntable />
           <NowPlaying />
+          <SleeveBack />
         </section>
         <section className="shelf-wrap">
           {status === "loading" && <p className="muted">Достаём пластинки с полки…</p>}
