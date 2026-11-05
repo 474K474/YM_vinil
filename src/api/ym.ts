@@ -39,6 +39,15 @@ export function coverUrl(uri: string | undefined | null, size = 400): string | n
   return `https://${uri.replace("%%", `${size}x${size}`)}`;
 }
 
+async function post<T>(path: string, form: Record<string, string>): Promise<T> {
+  try {
+    return await invoke<T>("ym_post", { path, form: Object.entries(form) });
+  } catch (e) {
+    if (e === "not_authorized") throw new NotAuthorizedError();
+    throw new Error(String(e));
+  }
+}
+
 export const hasToken = () => invoke<boolean>("has_token");
 export const startLogin = () => invoke<void>("start_login");
 export const logout = () => invoke<void>("logout");
@@ -116,3 +125,77 @@ export async function fetchShelf(account: Account): Promise<RecordItem[]> {
 
   return [likes, ...fromPlaylists, ...fromAlbums];
 }
+
+// ── Треки ────────────────────────────────────────────────
+
+export type Track = {
+  id: string;
+  title: string;
+  artists: string;
+  durationMs: number;
+};
+
+type RawTrack = {
+  id: string | number;
+  title: string;
+  version?: string;
+  durationMs?: number;
+  available?: boolean;
+  artists?: { name: string }[];
+};
+
+function toTrack(t: RawTrack): Track | null {
+  if (t.available === false || !t.durationMs) return null;
+  return {
+    id: String(t.id),
+    title: t.version ? `${t.title} (${t.version})` : t.title,
+    artists: t.artists?.map((a) => a.name).join(", ") ?? "",
+    durationMs: t.durationMs,
+  };
+}
+
+const clean = (list: (RawTrack | undefined)[]) =>
+  list.map((t) => (t ? toTrack(t) : null)).filter((t): t is Track => t !== null);
+
+async function tracksByIds(ids: string[]): Promise<RawTrack[]> {
+  const out: RawTrack[] = [];
+  for (let i = 0; i < ids.length; i += 100) {
+    out.push(...(await post<RawTrack[]>("/tracks", { "track-ids": ids.slice(i, i + 100).join(",") })));
+  }
+  return out;
+}
+
+/** Сколько последних лайков попадает в сборник «Мне нравится» (docs/PROJECT.md, 4.1). */
+export const LIKES_COMPILATION_SIZE = 40;
+
+/**
+ * Треки пластинки. Возвращает список томов: у альбома тома — отдельные диски,
+ * у плейлиста и «Мне нравится» том один.
+ */
+export async function fetchRecordTracks(record: RecordItem): Promise<Track[][]> {
+  if (record.kind === "album") {
+    const r = await get<{ volumes?: RawTrack[][] }>(`/albums/${record.sourceId}/with-tracks`);
+    return (r.volumes ?? []).map(clean).filter((v) => v.length > 0);
+  }
+
+  if (record.kind === "playlist") {
+    const r = await get<{ tracks?: { id: string | number; albumId?: number; track?: RawTrack }[] }>(
+      `/users/${record.ownerUid}/playlists/${record.sourceId}`,
+    );
+    const items = r.tracks ?? [];
+    const missing = items.filter((i) => !i.track).map((i) => (i.albumId ? `${i.id}:${i.albumId}` : String(i.id)));
+    const fetched = missing.length ? await tracksByIds(missing) : [];
+    const byId = new Map(fetched.map((t) => [String(t.id), t]));
+    return [clean(items.map((i) => i.track ?? byId.get(String(i.id))))];
+  }
+
+  const r = await get<{ library?: { tracks?: { id: string; albumId?: string }[] } }>(
+    `/users/${record.ownerUid}/likes/tracks`,
+  );
+  const ids = (r.library?.tracks ?? [])
+    .slice(0, LIKES_COMPILATION_SIZE)
+    .map((t) => (t.albumId ? `${t.id}:${t.albumId}` : t.id));
+  return [clean(await tracksByIds(ids))];
+}
+
+export const trackUrl = (trackId: string) => invoke<string>("track_url", { trackId });

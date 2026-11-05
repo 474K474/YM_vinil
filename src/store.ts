@@ -8,6 +8,7 @@ import {
   hasToken,
   logout as apiLogout,
 } from "./api/ym";
+import { eject, load } from "./player/engine";
 
 type Status = "checking" | "logged-out" | "loading" | "ready" | "error";
 
@@ -53,9 +54,14 @@ export const useStore = create<State>((set, get) => ({
     }
   },
 
-  putOnPlatter: (r) => set({ onPlatter: r }),
+  putOnPlatter: (r) => {
+    set({ onPlatter: r });
+    if (r) void load(r);
+    else eject();
+  },
 
   logout: async () => {
+    eject();
     await apiLogout();
     set({ status: "logged-out", account: null, shelf: [], onPlatter: null });
   },

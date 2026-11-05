@@ -4,6 +4,7 @@ import { useStore } from "./store";
 import { LoginScreen } from "./components/LoginScreen";
 import { Shelf } from "./components/Shelf";
 import { Turntable } from "./components/Turntable";
+import { NowPlaying } from "./components/NowPlaying";
 
 export default function App() {
   const { status, error, account, init, loadShelf, logout } = useStore();
@@ -36,7 +37,10 @@ export default function App() {
       </header>
 
       <main className="layout">
-        <Turntable />
+        <section className="deck">
+          <Turntable />
+          <NowPlaying />
+        </section>
         <section className="shelf-wrap">
           {status === "loading" && <p className="muted">Достаём пластинки с полки…</p>}
           {status === "error" && (

@@ -22,15 +22,23 @@ fn token() -> Result<String, String> {
     load_token().ok_or_else(|| "not_authorized".to_owned())
 }
 
-async fn get_json(path: &str, query: &[(String, String)]) -> Result<Value, String> {
+fn check_path(path: &str) -> Result<(), String> {
     // Разрешаем только относительные пути API, чтобы фронтенд не мог
     // отправить токен на чужой адрес.
-    if !path.starts_with('/') || path.contains("://") || path.contains("..") {
+    if !path.starts_with('/') || path.contains("://") || path.contains("..") || path.contains('@') {
         return Err("bad_path".into());
     }
-    let resp = client()?
-        .get(format!("{API}{path}"))
-        .query(query)
+    Ok(())
+}
+
+async fn get_json(path: &str, query: &[(String, String)]) -> Result<Value, String> {
+    check_path(path)?;
+    let req = client()?.get(format!("{API}{path}")).query(query);
+    send(req).await
+}
+
+async fn send(req: reqwest::RequestBuilder) -> Result<Value, String> {
+    let resp = req
         .header("Authorization", format!("OAuth {}", token()?))
         .header("X-Yandex-Music-Client", CLIENT_HEADER)
         .header("Accept-Language", "ru")
@@ -53,6 +61,13 @@ async fn get_json(path: &str, query: &[(String, String)]) -> Result<Value, Strin
 #[tauri::command]
 pub async fn ym_get(path: String, query: Option<Vec<(String, String)>>) -> Result<Value, String> {
     get_json(&path, &query.unwrap_or_default()).await
+}
+
+/// POST с form-данными (например, `/tracks` с `track-ids`).
+#[tauri::command]
+pub async fn ym_post(path: String, form: Vec<(String, String)>) -> Result<Value, String> {
+    check_path(&path)?;
+    send(client()?.post(format!("{API}{path}")).form(&form)).await
 }
 
 #[derive(Deserialize)]
@@ -107,6 +122,14 @@ pub async fn track_url(track_id: String) -> Result<String, String> {
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    #[test]
+    fn rejects_foreign_paths() {
+        assert!(check_path("/account/status").is_ok());
+        assert!(check_path("https://evil.example/x").is_err());
+        assert!(check_path("@evil.example").is_err());
+        assert!(check_path("/../x").is_err());
+    }
 
     #[test]
     fn parses_download_info_xml() {
