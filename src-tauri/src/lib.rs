@@ -1,4 +1,5 @@
 mod auth;
+mod discord;
 mod tray;
 mod ym;
 
@@ -25,6 +26,8 @@ pub fn run() {
             ym::cover_bytes,
             ym::track_url,
             tray::toggle_mini,
+            discord::discord_available,
+            discord::discord_set,
             tray::show_main_window,
             tray::set_close_to_tray,
             tray::set_tray_tooltip,

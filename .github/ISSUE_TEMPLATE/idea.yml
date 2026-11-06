@@ -1,0 +1,11 @@
+name: Идея
+description: Предложить новую функцию
+labels: [idea]
+body:
+  - type: textarea
+    id: idea
+    attributes:
+      label: Что хотелось бы
+      description: Опишите, как это должно выглядеть и зачем. Можно приложить картинку-референс.
+    validations:
+      required: true

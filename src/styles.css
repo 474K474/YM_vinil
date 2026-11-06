@@ -419,3 +419,13 @@ h1, h2 { font-family: var(--serif); font-weight: 600; margin: 0; }
 .seg button:hover { background: rgba(255,250,240,.85); }
 .seg button.on { background: #2b1d0e; color: #f6dcae; border-color: #2b1d0e; box-shadow: 0 0 10px rgba(240,166,74,.45); }
 .settings-panel { max-height: calc(100vh - 80px); overflow-y: auto; }
+
+/* ── Настройки волны ───────────────────────── */
+.wave-panel-wrap { position: relative; }
+.wave-panel { top: calc(100% + 8px); right: 0; width: 352px; }
+.wave-panel .seg button { padding: 6px 4px; }
+.wave-panel .seg { grid-template-columns: repeat(auto-fill, minmax(88px, 1fr)); }
+.wave-group { display: grid; gap: 8px; }
+.wave-note { font-size: 12px; color: #6b5a48; }
+.wave-reset { justify-self: start; }
+.lamp-btn.lit { border-color: var(--amber); color: #ffe6bd; box-shadow: 0 0 12px rgba(240,166,74,.35); }

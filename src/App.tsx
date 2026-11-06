@@ -13,6 +13,7 @@ import { updateSettings, useSettings } from "./settings";
 import { UpdateBanner } from "./components/UpdateBanner";
 import { startUpdateChecks } from "./updater";
 import { startBridge } from "./bridge";
+import { startDiscord } from "./discord";
 import { invoke } from "@tauri-apps/api/core";
 
 export default function App() {
@@ -23,6 +24,7 @@ export default function App() {
   useEffect(() => {
     startUpdateChecks();
     startBridge();
+    startDiscord();
   }, []);
 
   useEffect(() => {

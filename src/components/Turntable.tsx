@@ -36,6 +36,7 @@ import { toggleFullscreen } from "../fullscreen";
 import { DeckExtras } from "./DeckExtras";
 import { useSettings } from "../settings";
 import { vinylLook } from "../player/color";
+import { waveCaption } from "../player/wave";
 
 const { x: CX, y: CY } = CENTER;
 /** 33⅓ об/мин в градусах в секунду. */
@@ -107,6 +108,7 @@ export function Turntable() {
   const spinRef = useSpin(p.motor, p.speed);
   const svgRef = useRef<SVGSVGElement>(null);
   const vinylStyle = useSettings((s) => s.vinylStyle);
+  const waveSet = useSettings((s) => s.wave);
   // Пикчер-диск без обложки показываем цветным (docs/PROJECT.md, 4.10).
   const picture =
     vinylStyle === "picture" && record?.cover ? record.cover.replace("400x400", "1000x1000") : null;
@@ -344,7 +346,9 @@ export function Turntable() {
                   <circle cx={CX} cy={CY} r={LABEL_R - 30} fill="none" stroke="#00000033" strokeWidth="1" />
                   <text x={CX} y={CY - 52} className="label-brand">YM VINIL</text>
                   <text x={CX} y={CY + 30} className="label-title">{short(record.title, 24)}</text>
-                  <text x={CX} y={CY + 44} className="label-sub">{short(record.subtitle, 30)}</text>
+                  <text x={CX} y={CY + 44} className="label-sub">
+                    {short(record.kind === "wave" ? waveCaption(waveSet) || record.subtitle : record.subtitle, 30)}
+                  </text>
                   <text x={CX - 46} y={CY + 4} className="label-side">{side?.letter ?? "A"}</text>
                   <text x={CX + 46} y={CY + 4} className="label-side small">33⅓</text>
                   <text x={CX} y={CY + 64} className="label-fine">STEREO · LONG PLAY</text>

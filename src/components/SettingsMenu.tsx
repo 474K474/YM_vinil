@@ -1,9 +1,14 @@
 import { useEffect, useRef, useState } from "react";
 import { updateSettings, useSettings } from "../settings";
+import { discordAvailable } from "../discord";
 
 export function SettingsMenu() {
   const [open, setOpen] = useState(false);
-  const { vinylSound, vinylAmount, crackleVolume, autoFlip, vinylStyle, closeToTray } = useSettings();
+  const { vinylSound, vinylAmount, crackleVolume, autoFlip, vinylStyle, closeToTray, discord } = useSettings();
+  const [hasDiscord, setHasDiscord] = useState(false);
+  useEffect(() => {
+    void discordAvailable().then(setHasDiscord);
+  }, []);
   const ref = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -109,6 +114,20 @@ export function SettingsMenu() {
               onChange={(e) => updateSettings({ closeToTray: e.target.checked })}
             />
           </label>
+          {hasDiscord && (
+            <label className="switch-row">
+              <span>
+                Статус в Discord
+                <small>«Слушает YM Vinil»: трек, обложка и время</small>
+              </span>
+              <input
+                type="checkbox"
+                className="switch"
+                checked={discord}
+                onChange={(e) => updateSettings({ discord: e.target.checked })}
+              />
+            </label>
+          )}
         </div>
       )}
     </div>

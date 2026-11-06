@@ -2,6 +2,7 @@ import { useEffect, useMemo, useState } from "react";
 import { motion } from "motion/react";
 import { searchCatalog } from "../api/catalog";
 import { useHistory } from "../history";
+import { WavePanel } from "./WavePanel";
 import type { RecordItem } from "../api/ym";
 import { updateSettings, useSettings } from "../settings";
 import { useStore } from "../store";
@@ -202,7 +203,9 @@ export function Shelf() {
       )}
 
       {groups.recent.length > 0 && <Section id="recent" title="Недавно играли" items={groups.recent} />}
-      {groups.picks.length > 0 && <Section id="wave" title="Подборки" items={groups.picks} />}
+      {groups.picks.length > 0 && (
+        <Section id="wave" title="Подборки" items={groups.picks} extra={<WavePanel />} />
+      )}
       {groups.playlists.length > 0 && <Section id="playlists" title="Плейлисты" items={groups.playlists} />}
       {groups.albums.length > 0 && <Section id="albums" title="Альбомы" items={groups.albums} />}
       {groups.fresh.length > 0 && <Section id="fresh" title="Новинки" items={groups.fresh} />}

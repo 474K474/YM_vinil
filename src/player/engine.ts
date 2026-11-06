@@ -9,7 +9,7 @@ import { useSettings } from "../settings";
 import { DEFAULT_LABEL, coverColor, labelColor, vinylTint } from "./color";
 import { crackle } from "./crackle";
 import { attachMedia, audioCtx, wowFactor } from "./fx";
-import { pressWaveDisc, resetWave, waveFeedback } from "./wave";
+import { pressWaveDisc, resetWave, restartWave, waveFeedback } from "./wave";
 import { dislike, toggleLike } from "./likes";
 import { RUNOUT_R, grooveRadius } from "./geometry";
 import { type Side, allSides, press, trackOffsets } from "./press";
@@ -580,3 +580,21 @@ function setupMediaSession() {
 }
 
 setupMediaSession();
+
+// ── Настройки волны поменялись (docs/PROJECT.md, 4.11) ──
+
+useSettings.subscribe((s, prev) => {
+  if (s.wave === prev.wave) return;
+  const p = st();
+  if (p.record?.kind !== "wave" || p.loading) return;
+  const untouched = !p.motor && p.sideIdx === 0 && p.trackIdx === 0 && p.positionMs === 0;
+  if (untouched) {
+    // Волну ещё не слушали — просто прессуем её заново.
+    void load(p.record);
+    return;
+  }
+  // Доигрываем текущий диск, следующий будет уже с новыми настройками.
+  restartWave();
+  const discEnd = Math.floor(p.sideIdx / 2) * 2 + 2;
+  set({ sides: p.sides.slice(0, discEnd) });
+});

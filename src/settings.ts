@@ -1,7 +1,12 @@
 /** Локальные настройки (docs/PROJECT.md, 4.4). Хранятся только в этом браузерном профиле приложения. */
 import { create } from "zustand";
+import type { WaveSettings } from "./player/wave";
 
 export type Settings = {
+  /** Настройки «Моей волны». */
+  wave: WaveSettings;
+  /** Статус в Discord. */
+  discord: boolean;
   /** Закрытие окна прячет его в трей. */
   closeToTray: boolean;
   /** Стиль винила (docs/PROJECT.md, 4.10). */
@@ -28,6 +33,8 @@ export type Settings = {
 
 const KEY = "ym-vinil:settings";
 const defaults: Settings = {
+  wave: { diversity: "", mood: "", language: "" },
+  discord: true,
   closeToTray: true,
   vinylStyle: "black",
   shelfSort: "default",
