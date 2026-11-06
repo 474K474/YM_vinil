@@ -429,3 +429,35 @@ h1, h2 { font-family: var(--serif); font-weight: 600; margin: 0; }
 .wave-note { font-size: 12px; color: #6b5a48; }
 .wave-reset { justify-self: start; }
 .lamp-btn.lit { border-color: var(--amber); color: #ffe6bd; box-shadow: 0 0 12px rgba(240,166,74,.35); }
+
+/* ── Голос ─────────────────────────────────── */
+.mic-key { touch-action: none; }
+.mic-glow { fill: var(--amber); opacity: 0; transition: opacity .2s; }
+.mic-icon { fill: #3a3a3a; transition: fill .2s; }
+.mic-stroke { stroke: #3a3a3a; transition: stroke .2s; }
+.mic-key.hot .mic-glow { opacity: .9; filter: drop-shadow(0 0 6px var(--amber)); }
+.mic-key.hot .mic-icon { fill: #2b1d0e; }
+.mic-key.hot .mic-stroke { stroke: #2b1d0e; }
+.mic-key.busy .mic-glow { opacity: .45; animation: pulse 1s ease-in-out infinite; }
+@keyframes pulse { 50% { opacity: .15; } }
+
+.voice-toast {
+  position: fixed; top: 64px; left: 50%; transform: translateX(-50%); z-index: 60;
+  display: flex; align-items: center; gap: 12px; max-width: min(640px, 92vw);
+  padding: 10px 18px 10px 14px; border-radius: 12px; color: #2b1d0e;
+  background: linear-gradient(180deg, #f3e4c4, #dcc394);
+  box-shadow: 0 16px 34px rgba(0,0,0,.55), 0 0 0 1px #8a6a3c;
+  animation: drop .25s ease-out;
+}
+@keyframes drop { from { opacity: 0; transform: translate(-50%, -8px); } }
+.voice-lamp { flex: none; width: 12px; height: 12px; border-radius: 50%; background: #8a6a3c; }
+.voice-toast.listening .voice-lamp { background: var(--amber); box-shadow: 0 0 10px var(--amber); animation: pulse 1s ease-in-out infinite; }
+.voice-toast.thinking .voice-lamp, .voice-toast.loading .voice-lamp { background: var(--amber); opacity: .6; }
+.voice-toast.error .voice-lamp { background: #c0392b; }
+.voice-toast.done .voice-lamp { background: #3c8a4a; }
+.voice-title { font-weight: 700; font-size: 14px; }
+.voice-heard { font: italic 14px var(--serif); margin-top: 2px; }
+.voice-heard.muted { color: #6b5a48; font-style: normal; font-family: var(--sans); font-size: 12px; }
+.voice-model { display: grid; gap: 6px; font-size: 12px; color: #4a3622; }
+.voice-model .update-btn { justify-self: start; }
+.settings-panel .update-bar { width: 100%; }

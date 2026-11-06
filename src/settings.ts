@@ -5,6 +5,8 @@ import type { WaveSettings } from "./player/wave";
 export type Settings = {
   /** Настройки «Моей волны». */
   wave: WaveSettings;
+  /** Голосовое управление по кнопке (docs/PROJECT.md, 4.13). */
+  voice: boolean;
   /** Статус в Discord. */
   discord: boolean;
   /** Закрытие окна прячет его в трей. */
@@ -35,6 +37,7 @@ const KEY = "ym-vinil:settings";
 const defaults: Settings = {
   wave: { diversity: "", mood: "", language: "" },
   discord: true,
+  voice: false,
   closeToTray: true,
   vinylStyle: "black",
   shelfSort: "default",

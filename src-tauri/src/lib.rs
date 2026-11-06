@@ -1,6 +1,7 @@
 mod auth;
 mod discord;
 mod tray;
+mod voice;
 mod ym;
 
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
@@ -27,6 +28,10 @@ pub fn run() {
             ym::track_url,
             tray::toggle_mini,
             discord::discord_available,
+            voice::voice_model_installed,
+            voice::voice_model_download,
+            voice::voice_model_bytes,
+            voice::voice_model_delete,
             discord::discord_set,
             tray::show_main_window,
             tray::set_close_to_tray,

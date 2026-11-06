@@ -1,6 +1,6 @@
 [package]
 name = "ym-vinil"
-version = "1.0.0"
+version = "1.1.0"
 description = "Пластиночная оболочка для Яндекс Музыки"
 authors = ["474K474"]
 license = "MIT"
@@ -24,3 +24,4 @@ url = "2"
 tauri-plugin-updater = "2"
 tauri-plugin-process = "2"
 discord-rich-presence = "1.1"
+sha2 = "0.10"

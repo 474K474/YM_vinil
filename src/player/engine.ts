@@ -128,9 +128,16 @@ setInterval(() => {
  * Громкость = ручка на деке × текущее затухание (LIFT, торможение мотора).
  */
 let fade = 1;
+/** Приглушение, пока говорят голосовую команду (docs/PROJECT.md, 4.13). */
+let duckFactor = 1;
 function setFade(f: number) {
   fade = Math.min(1, Math.max(0, f));
-  audio.volume = Math.min(1, Math.max(0, useSettings.getState().volume * fade));
+  audio.volume = Math.min(1, Math.max(0, useSettings.getState().volume * fade * duckFactor));
+}
+
+export function duck(on: boolean) {
+  duckFactor = on ? 0.25 : 1;
+  setFade(fade);
 }
 useSettings.subscribe((s, prev) => {
   if (s.volume !== prev.volume) setFade(fade);
@@ -418,6 +425,31 @@ export async function nextTrack() {
   if (s.trackIdx + 1 < side.tracks.length) return seekTrack(s.trackIdx + 1);
   reportSkip();
   await goToSide((s.sideIdx + 1) % Math.max(1, s.sides.length), 0, true);
+}
+
+/** Дождаться, пока пластинка достанется из конверта (треки загружены). */
+export async function whenLoaded(timeoutMs = 10000): Promise<boolean> {
+  const t0 = Date.now();
+  await wait(50);
+  while (Date.now() - t0 < timeoutMs) {
+    const s = st();
+    if (!s.loading) return s.sides.length > 0;
+    await wait(80);
+  }
+  return false;
+}
+
+/** Найти трек на пластинке и поставить на него иглу (сторона переворачивается при нужде). */
+export async function cueTrack(trackId: string): Promise<boolean> {
+  const sides = st().sides;
+  for (let si = 0; si < sides.length; si++) {
+    const ti = sides[si].tracks.findIndex((t) => t.id === trackId);
+    if (ti >= 0) {
+      await playFrom(si, ti);
+      return true;
+    }
+  }
+  return false;
 }
 
 /** Пауза/играть для трея, мини-плеера и медиаклавиш. */

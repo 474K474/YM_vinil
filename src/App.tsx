@@ -14,6 +14,8 @@ import { UpdateBanner } from "./components/UpdateBanner";
 import { startUpdateChecks } from "./updater";
 import { startBridge } from "./bridge";
 import { startDiscord } from "./discord";
+import { startVoice } from "./voice";
+import { VoiceToast } from "./components/VoiceToast";
 import { invoke } from "@tauri-apps/api/core";
 
 export default function App() {
@@ -25,6 +27,7 @@ export default function App() {
     startUpdateChecks();
     startBridge();
     startDiscord();
+    startVoice();
   }, []);
 
   useEffect(() => {
@@ -42,6 +45,7 @@ export default function App() {
     return (
       <>
         <FullscreenStage />
+        <VoiceToast />
         <UpdateBanner />
       </>
     );
@@ -49,6 +53,7 @@ export default function App() {
   return (
     <div className="room">
       <UpdateBanner />
+      <VoiceToast />
       <div className="lamp-light" aria-hidden />
       <header className="topbar">
         <span className="brand">

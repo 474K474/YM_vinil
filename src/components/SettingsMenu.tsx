@@ -1,13 +1,17 @@
 import { useEffect, useRef, useState } from "react";
 import { updateSettings, useSettings } from "../settings";
 import { discordAvailable } from "../discord";
+import { deleteModel, downloadModel, refreshInstalled, useVoice } from "../voice";
 
 export function SettingsMenu() {
   const [open, setOpen] = useState(false);
   const { vinylSound, vinylAmount, crackleVolume, autoFlip, vinylStyle, closeToTray, discord } = useSettings();
   const [hasDiscord, setHasDiscord] = useState(false);
+  const voiceOn = useSettings((s) => s.voice);
+  const { installed, phase, progress } = useVoice();
   useEffect(() => {
     void discordAvailable().then(setHasDiscord);
+    void refreshInstalled();
   }, []);
   const ref = useRef<HTMLDivElement>(null);
 
@@ -88,6 +92,49 @@ export function SettingsMenu() {
               </button>
             ))}
           </div>
+
+          <div className="sp-title">Голос</div>
+          <label className="switch-row">
+            <span>
+              Голосовое управление
+              <small>Зажмите кнопку-микрофон на деке или правый Ctrl и скажите: «включи Кино», «пауза», «дальше»</small>
+            </span>
+            <input
+              type="checkbox"
+              className="switch"
+              checked={voiceOn}
+              onChange={(e) => {
+                updateSettings({ voice: e.target.checked });
+                if (e.target.checked && installed === false) void downloadModel();
+              }}
+            />
+          </label>
+          {voiceOn && (
+            <div className="voice-model">
+              {phase === "downloading" ? (
+                <>
+                  <span>Скачиваю модель речи… {Math.round(progress * 100)}%</span>
+                  <span className="update-bar">
+                    <span style={{ width: `${Math.round(progress * 100)}%` }} />
+                  </span>
+                </>
+              ) : installed ? (
+                <>
+                  <span>Модель речи установлена · 46 МБ · работает без интернета</span>
+                  <button className="update-btn quiet" onClick={() => void deleteModel().then(() => updateSettings({ voice: false }))}>
+                    Удалить
+                  </button>
+                </>
+              ) : (
+                <>
+                  <span>Нужна модель речи (46 МБ, один раз)</span>
+                  <button className="update-btn" onClick={() => void downloadModel()}>
+                    Скачать
+                  </button>
+                </>
+              )}
+            </div>
+          )}
 
           <div className="sp-title">Проигрыватель</div>
           <label className="switch-row">
