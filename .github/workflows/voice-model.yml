@@ -1,0 +1,40 @@
+name: voice-model
+
+# Один раз выкладывает модель распознавания русской речи (Vosk, Apache 2.0)
+# в пре-релиз voice-ru этого репозитория. Приложение скачивает её отсюда,
+# когда пользователь включает голосовое управление (docs/PROJECT.md, 4.13).
+# Пре-релиз — чтобы не мешать автообновлению (оно смотрит на releases/latest).
+on:
+  push:
+    branches: [voice-model]
+  workflow_dispatch:
+
+env:
+  MODEL: vosk-model-small-ru-0.22
+  TAG: voice-ru
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - name: Скачать официальную модель
+        run: |
+          curl -fsSL -o model.zip "https://alphacephei.com/vosk/models/${MODEL}.zip"
+          unzip -q model.zip
+          ls -la "${MODEL}"
+      - name: Упаковать в tar.gz (формат vosk-browser)
+        run: |
+          tar czf "${MODEL}.tar.gz" "${MODEL}"
+          sha256sum "${MODEL}.tar.gz" | tee "${MODEL}.tar.gz.sha256"
+          ls -la "${MODEL}.tar.gz"
+      - name: Выложить в релиз
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          gh release view "$TAG" --repo "$GITHUB_REPOSITORY" >/dev/null 2>&1 || \
+            gh release create "$TAG" --repo "$GITHUB_REPOSITORY" --prerelease \
+              --title "Модель голосового управления (русский)" \
+              --notes "Модель распознавания речи Vosk (${MODEL}, Apache 2.0, alphacephei.com/vosk). Скачивается приложением автоматически — ставить вручную не нужно."
+          gh release upload "$TAG" "${MODEL}.tar.gz" "${MODEL}.tar.gz.sha256" --repo "$GITHUB_REPOSITORY" --clobber
